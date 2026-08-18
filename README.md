@@ -113,4 +113,6 @@ Third-party components and their notices are documented in [THIRD_PARTY_NOTICES.
 
 ## Acknowledgements
 
+ART started as a personal project for my own OBS setup before being cleaned up and published.
+
 This project was initially based on the official [OBS Plugin Template](https://github.com/obsproject/obs-plugintemplate). Thanks to the OBS Project contributors for providing and maintaining the template and OBS Studio plugin APIs.
