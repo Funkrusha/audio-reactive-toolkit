@@ -1,0 +1,34 @@
+name: OBS Compatibility
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 4 * * 1"
+  pull_request:
+    paths:
+      - "src/**"
+      - "CMakeLists.txt"
+      - "cmake/**"
+      - "buildspec*.json"
+      - ".github/actions/build-plugin/**"
+      - ".github/scripts/Build-Windows.ps1"
+      - ".github/workflows/compatibility.yaml"
+
+permissions:
+  contents: read
+
+jobs:
+  windows-obs-32:
+    name: Windows / OBS 32
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Build against OBS 32
+        uses: ./.github/actions/build-plugin
+        with:
+          target: x64
+          config: RelWithDebInfo
+          buildSpecFile: ${{ github.workspace }}/buildspec-obs32.json

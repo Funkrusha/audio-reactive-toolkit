@@ -1,0 +1,129 @@
+name: Mac/Linux/Windows CI
+run-name: ${{ github.ref_name }} push run 🚀
+on:
+  push:
+    branches:
+      - develop
+      - main
+      - 'release/**'
+    tags:
+      - '*'
+permissions:
+  contents: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check-format:
+    name: Check Formatting 🔍
+    if: github.ref_name == 'develop' || github.ref_name == 'main'
+    uses: ./.github/workflows/check-format.yaml
+    permissions:
+      contents: read
+
+  build-project:
+    name: Build Project 🧱
+    uses: ./.github/workflows/build-project.yaml
+    with:
+      buildMacOS: true
+      buildUbuntu: true
+    secrets: inherit
+    permissions:
+      contents: read
+
+  create-release:
+    name: Create Release 🛫
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-24.04
+    needs: build-project
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout release metadata
+        uses: actions/checkout@v6
+
+      - name: Check Release Tag ☑️
+        id: check
+        run: |
+          : Check Release Tag ☑️
+          if [[ "${RUNNER_DEBUG}" ]]; then set -x; fi
+          if [[ "${GITHUB_REF_NAME}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo 'validTag=true' >> $GITHUB_OUTPUT
+            echo 'prerelease=false' >> $GITHUB_OUTPUT
+            echo "version=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
+          elif [[ "${GITHUB_REF_NAME}" =~ ^[0-9]+\.[0-9]+\.[0-9]+-(beta|rc)(\.[0-9]+|[0-9]+)?$ ]]; then
+            echo 'validTag=true' >> $GITHUB_OUTPUT
+            echo 'prerelease=true' >> $GITHUB_OUTPUT
+            echo "version=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
+          else
+            echo 'validTag=false' >> $GITHUB_OUTPUT
+          fi
+
+      - name: Download Build Artifacts 📥
+        uses: actions/download-artifact@v8
+        if: fromJSON(steps.check.outputs.validTag)
+        id: download
+
+      - name: Rename Files 🏷️
+        if: fromJSON(steps.check.outputs.validTag)
+        run: |
+          : Rename Files 🏷️
+          if [[ "${RUNNER_DEBUG}" ]]; then set -x; fi
+          shopt -s extglob
+          shopt -s nullglob
+
+          root_dir="$(pwd)"
+
+          while IFS= read -r -d '' candidate; do
+            mv "${candidate}" "${root_dir}"
+          done < <(
+            find . -mindepth 2 -maxdepth 2 -type f \
+              \( -name '*.exe' -o -name '*.zip' -o -name '*.pkg' -o -name '*.deb' -o -name '*.ddeb' -o -name '*.tar.xz' \) \
+              -print0
+          )
+
+          compgen -G "${root_dir}/*.deb" > /dev/null || {
+            echo '::error::Ubuntu Debian package is missing from downloaded build artifacts.'
+            exit 1
+          }
+
+      - name: Generate Checksums 🪪
+        if: fromJSON(steps.check.outputs.validTag)
+        run: |
+          : Generate Checksums 🪪
+          if [[ "${RUNNER_DEBUG}" ]]; then set -x; fi
+          shopt -s extglob
+
+          echo "### Checksums" > ${{ github.workspace }}/CHECKSUMS.txt
+          for file in ${{ github.workspace }}/@(*.exe|*.deb|*.ddeb|*.pkg|*.tar.xz|*.zip); do
+            echo "    ${file##*/}: $(sha256sum "${file}" | cut -d " " -f 1)" >> ${{ github.workspace }}/CHECKSUMS.txt
+          done
+
+      - name: Assemble Release Notes
+        if: fromJSON(steps.check.outputs.validTag)
+        run: |
+          cat "${{ github.workspace }}/CHANGELOG.md" > "${{ github.workspace }}/RELEASE_NOTES.md"
+          printf '\n' >> "${{ github.workspace }}/RELEASE_NOTES.md"
+          cat "${{ github.workspace }}/CHECKSUMS.txt" >> "${{ github.workspace }}/RELEASE_NOTES.md"
+
+      - name: Create Release 🛫
+        if: fromJSON(steps.check.outputs.validTag)
+        id: create_release
+        uses: softprops/action-gh-release@v3
+        with:
+          draft: true
+          prerelease: ${{ fromJSON(steps.check.outputs.prerelease) }}
+          tag_name: ${{ steps.check.outputs.version }}
+          name: ${{ needs.build-project.outputs.pluginName }} ${{ steps.check.outputs.version }}
+          body_path: ${{ github.workspace }}/RELEASE_NOTES.md
+          files: |
+            ${{ github.workspace }}/*.exe
+            ${{ github.workspace }}/*.zip
+            ${{ github.workspace }}/*.pkg
+            ${{ github.workspace }}/*.deb
+            ${{ github.workspace }}/*.ddeb
+            ${{ github.workspace }}/*.tar.xz
+            ${{ github.workspace }}/CHECKSUMS.txt

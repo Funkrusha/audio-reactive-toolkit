@@ -1,0 +1,26 @@
+name: Dispatch
+run-name: Dispatched Repository Actions - ${{ inputs.job }} ⌛️
+on:
+  workflow_dispatch:
+    inputs:
+      job:
+        description: Dispatch job to run
+        required: true
+        type: choice
+        options:
+          - build
+      package:
+        description: Create installers and native platform packages
+        required: false
+        type: boolean
+        default: false
+permissions:
+  contents: read
+jobs:
+  check-and-build:
+    if: inputs.job == 'build'
+    uses: ./.github/workflows/build-project.yaml
+    with:
+      buildMacOS: true
+      buildUbuntu: true
+      packageArtifacts: ${{ inputs.package }}
