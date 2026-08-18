@@ -2,7 +2,7 @@
 
 All notable changes to Audio Reactive Toolkit are documented here.
 
-## 0.1.0-beta.1 - 2026-08-18
+## 0.2.0 - 2026-08-18
 
 ### Added
 
@@ -21,4 +21,4 @@ All notable changes to Audio Reactive Toolkit are documented here.
 
 ### Notes
 
-- This is the first public beta. Settings and the WebSocket message format may still change before version 1.0.
+- This is the first public release. Settings and the WebSocket message format may still change before version 1.0.

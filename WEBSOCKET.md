@@ -3,7 +3,7 @@
 Audio Reactive Toolkit (ART) publishes real-time audio analysis data for custom OBS Browser Sources and other local
 visuals. This document describes message format version `1`.
 
-The protocol is part of the public beta and may evolve before ART 1.0. Clients should check the `version` field and
+The protocol is part of early access and may evolve before ART 1.0. Clients should check the `version` field and
 ignore unknown fields so that compatible additions do not break them.
 
 ## Connection

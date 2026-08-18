@@ -8,7 +8,7 @@
 
 Audio Reactive Toolkit (ART) is a native OBS Studio plugin that turns audio into real-time analysis data for browser-based visuals. It captures a selected OBS audio source, detects levels, frequency bands, beats, transients, and BPM, then publishes the results over a local WebSocket connection.
 
-ART supports Windows, macOS, and Linux.
+ART supports Windows (tested), Linux (tested). macOS support is experimental.
 
 ## Preview
 
@@ -112,5 +112,7 @@ Audio Reactive Toolkit is free and open-source software licensed under the [GNU 
 Third-party components and their notices are documented in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 ## Acknowledgements
+
+ART started as a personal project for my own OBS setup before being cleaned up and published.
 
 This project was initially based on the official [OBS Plugin Template](https://github.com/obsproject/obs-plugintemplate). Thanks to the OBS Project contributors for providing and maintaining the template and OBS Studio plugin APIs.

@@ -1,7 +1,7 @@
 # Audio Reactive Toolkit Help
 
 This guide covers installation, initial setup, browser visualizers, troubleshooting, and removal of Audio Reactive
-Toolkit (ART). The plugin is currently in public beta, so settings and the local WebSocket message format may change
+Toolkit (ART). The plugin is currently in early access, so settings and the local WebSocket message format may change
 before version 1.0.
 
 ## Supported systems
@@ -11,15 +11,15 @@ before version 1.0.
 - Ubuntu 24.04, x86_64
 - OBS Studio 31.1.1 or later
 
-Windows has received the primary runtime testing for the first beta. macOS and Ubuntu packages are available for early
-testing; please report platform-specific problems.
+Windows and Linux have received the primary runtime testing for this release. 
+macOS packages build successfully but are not yet runtime-tested; please report platform-specific problems.
 
 ## Download
 
 Download the latest package from the
 [GitHub Releases page](https://github.com/Funkrusha/audio-reactive-toolkit/releases).
 
-For `0.1.0-beta.1`, choose the package for your system:
+For `0.2.0`, choose the package for your system:
 
 - Windows: `windows-x64-setup.exe`
 - macOS: `macos-universal.pkg`
@@ -48,7 +48,7 @@ Security** and review the displayed security message before trying again.
 Install the downloaded package from a terminal:
 
 ```bash
-sudo apt install ./audio-reactive-toolkit-0.1.0-beta.1-x86_64-linux-gnu.deb
+sudo apt install ./audio-reactive-toolkit-0.2.0-x86_64-linux-gnu.deb
 ```
 
 Using `apt` instead of `dpkg` allows required dependencies to be resolved automatically.
