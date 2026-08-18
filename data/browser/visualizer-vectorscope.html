@@ -1,0 +1,25 @@
+<!-- SPDX-FileCopyrightText: 2026 Funkrusha -->
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Audio Reactive Toolkit - XY Audio Vectorscope</title>
+  <link rel="stylesheet" href="visualizer-showcase.css">
+  <style>
+    .axis-label { position: fixed; color: #a5f3fc; font-size: 12px; font-weight: 800; letter-spacing: .18em; text-shadow: 0 0 12px #22d3ee; pointer-events: none; }
+    #x-label { left: 50%; bottom: 16px; transform: translateX(-50%); }
+    #y-label { left: 14px; top: 50%; transform: translateY(-50%) rotate(-90deg); }
+    .tempo { top: 18px; right: 18px; bottom: auto; left: auto; transform: none; }
+  </style>
+</head>
+<body>
+  <canvas id="visualizer"></canvas>
+  <div id="x-label" class="axis-label">BASS</div>
+  <div id="y-label" class="axis-label">MID</div>
+  <div id="tempo" class="tempo"><span id="bpm-value">&mdash;</span><small>BPM</small></div>
+  <div id="status" class="status">Connecting...</div>
+  <script src="visualizer-vectorscope.js"></script>
+</body>
+</html>

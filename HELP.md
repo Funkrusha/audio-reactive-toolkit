@@ -87,8 +87,13 @@ Available pages:
 - `visualizer-three.html`: transparent Three.js orb
 - `visualizer-tunnel.html`: neon tunnel
 - `visualizer-landscape.html`: spectrum landscape
+- `visualizer-vortex.html`: neon particle vortex with beat shockwaves
+- `visualizer-aurora.html`: flowing liquid aurora curtains
+- `visualizer-city.html`: futuristic spectrum-driven skyline
+- `visualizer-constellation.html`: connected audio-reactive star field
+- `visualizer-vectorscope.html`: XY energy scope using bass and mid frequencies
 
-Use `1280 x 720` for the three artistic visualizers. The diagnostic view works well at `1280 x 1280`.
+Use `1280 x 720` for the artistic visualizers. The diagnostic view works well at `1280 x 1280`.
 
 ### Custom WebSocket port
 
@@ -99,6 +104,10 @@ visualizer-three.html?port=9000
 ```
 
 The plugin setting and Browser Source parameter must use the same port.
+
+The vectorscope uses bass on the X axis and mids on the Y axis by default. Use
+`visualizer-vectorscope.html?axes=bass-high` to place high frequencies on the Y axis instead. This visualization maps
+band energy over time; it is not a phase-accurate oscilloscope of the raw PCM waveform.
 
 For custom visualizers and integrations, see the [WebSocket protocol reference](WEBSOCKET.md).
 

@@ -47,10 +47,15 @@ Add a **Browser** source in OBS, enable **Local file**, and select one of the in
 C:\Program Files\obs-studio\data\obs-plugins\audio-reactive-toolkit\browser\visualizer-three.html
 C:\Program Files\obs-studio\data\obs-plugins\audio-reactive-toolkit\browser\visualizer-tunnel.html
 C:\Program Files\obs-studio\data\obs-plugins\audio-reactive-toolkit\browser\visualizer-landscape.html
+C:\Program Files\obs-studio\data\obs-plugins\audio-reactive-toolkit\browser\visualizer-vortex.html
+C:\Program Files\obs-studio\data\obs-plugins\audio-reactive-toolkit\browser\visualizer-aurora.html
+C:\Program Files\obs-studio\data\obs-plugins\audio-reactive-toolkit\browser\visualizer-city.html
+C:\Program Files\obs-studio\data\obs-plugins\audio-reactive-toolkit\browser\visualizer-constellation.html
+C:\Program Files\obs-studio\data\obs-plugins\audio-reactive-toolkit\browser\visualizer-vectorscope.html
 C:\Program Files\obs-studio\data\obs-plugins\audio-reactive-toolkit\browser\index.html
 ```
 
-The first three files provide transparent visualizations. `index.html` is a diagnostic view of all analysis values. A size of `1280 x 720` works well for the visualizers; use `1280 x 1280` for the diagnostic view.
+The eight `visualizer-*.html` files provide transparent visualizations. `index.html` is a diagnostic view of all analysis values. A size of `1280 x 720` works well for the visualizers; use `1280 x 1280` for the diagnostic view.
 
 The pages connect to the plugin automatically and reconnect after OBS or the plugin restarts.
 
