@@ -1,0 +1,31 @@
+# Exclude everything
+/*
+
+# Except for default project files
+!/.github
+!/build-aux
+!/cmake
+!/data
+!/installer
+!/src
+!.clang-format
+!.gersemirc
+!.gitignore
+!buildspec.json
+!buildspec-obs32.json
+!CHANGELOG.md
+!CMakeLists.txt
+!CMakePresets.json
+!HELP.md
+!LICENSE
+!README.md
+!THIRD_PARTY_NOTICES.md
+
+# Exclude lock files
+*.lock.json
+
+# Exclude macOS legacy resource forks
+.DS_Store
+
+# Exclude CMake build number cache
+/cmake/.CMakeBuildNumber
