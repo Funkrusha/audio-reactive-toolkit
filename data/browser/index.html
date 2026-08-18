@@ -1,0 +1,51 @@
+<!-- SPDX-FileCopyrightText: 2026 Funkrusha -->
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Audio Reactive Toolkit</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Audio Reactive Toolkit</h1>
+      <span id="status" class="status disconnected">Connecting…</span>
+    </header>
+
+    <section class="meters">
+      <div class="meter-card">
+        <span>RMS</span>
+        <div class="track"><div id="rms" class="fill rms"></div></div>
+        <output id="rms-value">0.000</output>
+      </div>
+      <div class="meter-card">
+        <span>Peak</span>
+        <div class="track"><div id="peak" class="fill peak"></div></div>
+        <output id="peak-value">0.000</output>
+      </div>
+    </section>
+
+    <section class="events" aria-label="Detected audio events">
+      <div class="tempo"><strong id="bpm-value">—</strong><span>BPM</span><small id="tempo-confidence">learning</small></div>
+      <div id="beat-indicator" class="event-indicator beat-event"><span></span>Beat</div>
+      <div id="transient-indicator" class="event-indicator transient-event"><span></span>Transient</div>
+    </section>
+
+    <section class="bands">
+      <div class="band bass"><div id="bass" class="band-fill"></div><span>Bass</span><output id="bass-value">0.000</output></div>
+      <div class="band mid"><div id="mid" class="band-fill"></div><span>Mid</span><output id="mid-value">0.000</output></div>
+      <div class="band high"><div id="high" class="band-fill"></div><span>High</span><output id="high-value">0.000</output></div>
+    </section>
+
+    <section class="spectrum-card">
+      <div class="spectrum-heading"><span>32-band spectrum</span><span>30 Hz – 18 kHz</span></div>
+      <div id="spectrum" class="spectrum" aria-label="32-band frequency spectrum"></div>
+    </section>
+  </main>
+  <script src="spectrum-scale.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

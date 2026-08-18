@@ -1,0 +1,21 @@
+<!-- SPDX-FileCopyrightText: 2026 Funkrusha -->
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Audio Reactive Toolkit – Spectrum Landscape</title>
+  <link rel="stylesheet" href="visualizer-landscape.css">
+</head>
+<body>
+  <canvas id="visualizer"></canvas>
+  <div id="tempo" class="tempo" aria-label="Detected tempo">
+    <span id="bpm-value">—</span><small>BPM</small>
+  </div>
+  <div id="status" class="status">Connecting…</div>
+  <script src="vendor/three.min.js"></script>
+  <script src="spectrum-scale.js"></script>
+  <script src="visualizer-landscape.js"></script>
+</body>
+</html>
