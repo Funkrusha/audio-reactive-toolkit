@@ -11,6 +11,7 @@
 !.clang-format
 !.gersemirc
 !.gitignore
+!ART.png
 !buildspec.json
 !buildspec-obs32.json
 !CHANGELOG.md
