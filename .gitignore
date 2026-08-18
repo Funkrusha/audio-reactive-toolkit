@@ -11,7 +11,7 @@
 !.clang-format
 !.gersemirc
 !.gitignore
-!ART.png
+!/assets
 !buildspec.json
 !buildspec-obs32.json
 !CHANGELOG.md
@@ -21,6 +21,7 @@
 !LICENSE
 !README.md
 !THIRD_PARTY_NOTICES.md
+!WEBSOCKET.md
 
 # Exclude lock files
 *.lock.json

@@ -57,12 +57,19 @@ Using `apt` instead of `dpkg` allows required dependencies to be resolved automa
 
 1. Start OBS Studio.
 2. Open **Tools > Audio Reactive Toolkit: Settings**.
+
+   <img src="assets/screenshots/tools-art-settings.png" alt="Audio Reactive Toolkit settings entry in the OBS Tools menu" width="211">
+
 3. Select the OBS audio source that should drive the analysis. **Automatic** uses the first global audio output.
 4. Keep the WebSocket port at `8765` unless it conflicts with another local service.
 5. Save the settings.
 6. Add one of the included visualizers as an OBS Browser Source.
 
 Settings are persisted by OBS and restored the next time it starts.
+
+<p align="center">
+  <img src="assets/screenshots/art-settings-dialog.png" alt="Audio Reactive Toolkit settings dialog" width="535">
+</p>
 
 ## Add a visualizer
 
@@ -92,6 +99,8 @@ visualizer-three.html?port=9000
 ```
 
 The plugin setting and Browser Source parameter must use the same port.
+
+For custom visualizers and integrations, see the [WebSocket protocol reference](WEBSOCKET.md).
 
 ### Spectrum display scaling
 

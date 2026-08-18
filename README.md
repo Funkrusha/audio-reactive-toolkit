@@ -1,7 +1,7 @@
 # Audio Reactive Toolkit
 
 <p align="center">
-  <img src="ART.png" alt="Audio Reactive Toolkit logo" width="540">
+  <img src="assets/logo/art.png" alt="Audio Reactive Toolkit logo" width="540">
 </p>
 
 [![Mac/Linux/Windows CI](https://github.com/Funkrusha/audio-reactive-toolkit/actions/workflows/push.yaml/badge.svg?branch=main&event=push)](https://github.com/Funkrusha/audio-reactive-toolkit/actions/workflows/push.yaml?query=branch%3Amain)
@@ -9,6 +9,12 @@
 Audio Reactive Toolkit (ART) is a native OBS Studio plugin that turns audio into real-time analysis data for browser-based visuals. It captures a selected OBS audio source, detects levels, frequency bands, beats, transients, and BPM, then publishes the results over a local WebSocket connection.
 
 ART supports Windows, macOS, and Linux.
+
+## Preview
+
+<p align="center">
+  <img src="assets/screenshots/art-demo.gif" alt="Audio Reactive Toolkit visualizers reacting to live audio" width="900">
+</p>
 
 ## Features
 
@@ -20,6 +26,8 @@ ART supports Windows, macOS, and Linux.
 - Local WebSocket output at `ws://127.0.0.1:8765`
 - Included transparent, tunnel, landscape, and diagnostic visualizers
 - Optional native OBS text-source output for BPM
+
+Developers building custom visuals can use the complete [WebSocket protocol reference](WEBSOCKET.md).
 
 ## Installation
 
