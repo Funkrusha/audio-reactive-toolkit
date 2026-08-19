@@ -2,6 +2,52 @@
 
 All notable changes to Audio Reactive Toolkit are documented here.
 
+## 0.3.0 - 2026-08-19
+
+### Added
+
+- Experimental native OBS Browser Source transport through the supported `obs-websocket` and `obs-browser`
+  `emit_event` vendor API.
+- Combined `artFrame` event with the WebSocket schema's audio, frequency-band, beat, transient, tempo, timing, and
+  32-band spectrum data.
+- Configurable **Both**, **Native only**, and **WebSocket only** transport modes for compatibility and isolated
+  performance testing.
+- Transport-independent `ART.on("frame")`, `ART.on("beat")`, and `ART.on("bpm")` JavaScript client API with
+  WebSocket reconnection and native spectrum normalization.
+- Native-event diagnostic page and a shared native-versus-WebSocket benchmark page with latency, jitter, message-rate,
+  sequence-gap, payload-size, and JSON result reporting.
+- Native transport architecture, limitations, test procedure, and preliminary Windows benchmark documentation.
+- Dedicated `docs/` structure with a documentation index.
+
+### Changed
+
+- Centralized the analyzer wire model, protocol field names, and native/WebSocket serializers in a shared ART protocol
+  module to prevent schema drift between transports.
+- Added `sentAt` and `sequence` fields to WebSocket schema version 1 for same-host latency and dropped-message
+  measurements.
+- Aligned `artFrame` field names and nesting with the WebSocket payload. Native `fft32` entries use `{ "v": number }`
+  objects because the public OBS data API does not support primitive numeric arrays.
+- WebSocket JSON serialization now remains idle until at least one client completes its handshake.
+- Connected WebSocket clients are now woken immediately when a new frame is published instead of relying on a 10 ms
+  sender polling interval.
+- Migrated bundled visualizers to the shared ART JavaScript client and added visible transport labels.
+- Made **WebSocket only** the default transport mode. Native remains available as an explicit low-latency option for
+  controlled OBS Browser Source scenes.
+
+### Performance
+
+- In a concurrent paired Windows 60 Hz test, native `artFrame` averaged 0.22 ms delivery latency and 0.24 ms arrival
+  jitter, compared with 0.65 ms and 0.22 ms for wake-driven WebSocket delivery.
+- Both transports sustained 60 Hz without dropped messages. Separate isolated mode runs both remained within the
+  observed 0.5-0.9% OBS CPU range on the test system.
+
+### Notes
+
+- Native events are broadcast to every loaded Browser Source because the public `obs-browser` vendor API does not
+  support per-source targeting.
+- Native transport remains experimental pending longer runs, macOS/Linux validation, and genuine 64-/128-bin analyzer
+  benchmarks.
+
 ## 0.2.0 - 2026-08-18
 
 ### Added
