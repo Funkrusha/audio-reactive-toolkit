@@ -19,7 +19,7 @@ macOS packages build successfully but are not yet runtime-tested; please report 
 Download the latest package from the
 [GitHub Releases page](https://github.com/Funkrusha/audio-reactive-toolkit/releases).
 
-For `0.2.0`, choose the package for your system:
+For `0.3.0`, choose the package for your system:
 
 - Windows: `windows-x64-setup.exe`
 - macOS: `macos-universal.pkg`
@@ -48,7 +48,7 @@ Security** and review the displayed security message before trying again.
 Install the downloaded package from a terminal:
 
 ```bash
-sudo apt install ./audio-reactive-toolkit-0.2.0-x86_64-linux-gnu.deb
+sudo apt install ./audio-reactive-toolkit-0.3.0-x86_64-linux-gnu.deb
 ```
 
 Using `apt` instead of `dpkg` allows required dependencies to be resolved automatically.
@@ -109,7 +109,7 @@ The vectorscope uses bass on the X axis and mids on the Y axis by default. Use
 `visualizer-vectorscope.html?axes=bass-high` to place high frequencies on the Y axis instead. This visualization maps
 band energy over time; it is not a phase-accurate oscilloscope of the raw PCM waveform.
 
-For custom visualizers and integrations, see the [WebSocket protocol reference](WEBSOCKET.md).
+For custom visualizers and integrations, see the [WebSocket protocol reference](websocket.md).
 
 ### Spectrum display scaling
 

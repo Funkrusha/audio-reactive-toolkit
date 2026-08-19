@@ -27,7 +27,13 @@ ART supports Windows (tested), Linux (tested). macOS support is experimental.
 - Included transparent, tunnel, landscape, and diagnostic visualizers
 - Optional native OBS text-source output for BPM
 
-Developers building custom visuals can use the complete [WebSocket protocol reference](WEBSOCKET.md).
+Developers building custom visuals can use the complete [WebSocket protocol reference](docs/websocket.md).
+The shared [ART JavaScript client](docs/javascript-client.md) provides the same `frame`, `beat`, and `bpm` API for
+WebSocket and Native.
+An experimental OBS-native transport is documented in
+[docs/native-browser-events.md](docs/native-browser-events.md).
+Preliminary native-versus-WebSocket measurements are summarized in
+[docs/transport-comparison.md](docs/transport-comparison.md).
 
 ## Installation
 
@@ -37,7 +43,8 @@ Download the package for your operating system from the [latest release](https:/
 - macOS: open the Universal `.pkg` package.
 - Ubuntu: install the x86_64 `.deb` package.
 
-Restart OBS Studio after installation. Detailed setup instructions and troubleshooting are available in the [user guide](HELP.md).
+Restart OBS Studio after installation. Detailed setup instructions and troubleshooting are available in the
+[user guide](docs/user-guide.md).
 
 ## Using a visualizer
 
