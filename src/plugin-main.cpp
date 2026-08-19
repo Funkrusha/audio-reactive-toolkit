@@ -138,7 +138,8 @@ void load_settings()
 		if (obs_data_has_user_value(settings, Settings::Field::bpm_text_source))
 			selected_bpm_text_source_name = obs_data_get_string(settings, Settings::Field::bpm_text_source);
 		if (obs_data_has_user_value(settings, Settings::Field::bpm_text_source_uuid))
-			selected_bpm_text_source_uuid = obs_data_get_string(settings, Settings::Field::bpm_text_source_uuid);
+			selected_bpm_text_source_uuid =
+				obs_data_get_string(settings, Settings::Field::bpm_text_source_uuid);
 		if (obs_data_has_user_value(settings, Settings::Field::bpm_text_format)) {
 			bpm_text_format = obs_data_get_string(settings, Settings::Field::bpm_text_format);
 			if (bpm_text_format.empty())
@@ -159,7 +160,8 @@ void load_settings()
 		if (saved_message_rate >= 1 && saved_message_rate <= 60)
 			websocket_messages_per_second = static_cast<uint32_t>(saved_message_rate);
 		if (obs_data_has_user_value(settings, Settings::Field::transport_mode)) {
-			const int64_t saved_transport_mode = obs_data_get_int(settings, Settings::Field::transport_mode);
+			const int64_t saved_transport_mode =
+				obs_data_get_int(settings, Settings::Field::transport_mode);
 			if (saved_transport_mode >= static_cast<int64_t>(TransportMode::Both) &&
 			    saved_transport_mode <= static_cast<int64_t>(TransportMode::WebSocketOnly))
 				transport_mode = static_cast<TransportMode>(saved_transport_mode);
