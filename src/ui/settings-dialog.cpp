@@ -31,9 +31,9 @@ show_settings_dialog(void *parent, const std::vector<std::string> &audio_sources
 		     const std::vector<ObsTextSourceOption> &text_sources, const std::string &selected_source,
 		     const std::string &selected_bpm_text_source, const std::string &selected_bpm_text_source_uuid,
 		     const std::string &bpm_text_format, uint32_t bpm_decimal_places, uint16_t websocket_port,
-		     uint32_t websocket_messages_per_second, uint32_t fft_size, uint32_t beat_sensitivity,
-		     uint32_t beat_cooldown_ms, uint32_t transient_sensitivity, uint32_t transient_cooldown_ms,
-		     bool debug_logging)
+		     uint32_t websocket_messages_per_second, TransportMode transport_mode, uint32_t fft_size,
+		     uint32_t beat_sensitivity, uint32_t beat_cooldown_ms, uint32_t transient_sensitivity,
+		     uint32_t transient_cooldown_ms, bool debug_logging)
 {
 	auto *parent_widget = static_cast<QWidget *>(parent);
 	QDialog dialog(parent_widget);
@@ -117,6 +117,15 @@ show_settings_dialog(void *parent, const std::vector<std::string> &audio_sources
 	}
 	form->addRow(text("Settings.FftSize"), fft_combo);
 
+	auto *transport_combo = new QComboBox(&dialog);
+	transport_combo->addItem(text("Settings.Transport.Both"), static_cast<uint32_t>(TransportMode::Both));
+	transport_combo->addItem(text("Settings.Transport.NativeOnly"),
+				 static_cast<uint32_t>(TransportMode::NativeOnly));
+	transport_combo->addItem(text("Settings.Transport.WebSocketOnly"),
+				 static_cast<uint32_t>(TransportMode::WebSocketOnly));
+	transport_combo->setCurrentIndex(static_cast<int>(transport_mode));
+	form->addRow(text("Settings.Transport"), transport_combo);
+
 	auto *port_spin = new QSpinBox(&dialog);
 	port_spin->setRange(1024, 65535);
 	port_spin->setValue(websocket_port);
@@ -128,6 +137,13 @@ show_settings_dialog(void *parent, const std::vector<std::string> &audio_sources
 	message_rate_spin->setValue(static_cast<int>(websocket_messages_per_second));
 	message_rate_spin->setSuffix(QStringLiteral(" / s"));
 	form->addRow(text("Settings.WebSocketMessages"), message_rate_spin);
+	auto update_websocket_controls = [transport_combo, port_spin](int = 0) {
+		const auto mode = static_cast<TransportMode>(transport_combo->currentData().toUInt());
+		port_spin->setEnabled(mode != TransportMode::NativeOnly);
+	};
+	QObject::connect(transport_combo, qOverload<int>(&QComboBox::currentIndexChanged), &dialog,
+			 update_websocket_controls);
+	update_websocket_controls();
 
 	auto *logging_combo = new QComboBox(&dialog);
 	logging_combo->addItem(text("Settings.Logging.Info"), false);
@@ -197,6 +213,7 @@ show_settings_dialog(void *parent, const std::vector<std::string> &audio_sources
 	result.bpm_decimal_places = bpm_decimal_places_combo->currentData().toUInt();
 	result.websocket_port = static_cast<uint16_t>(port_spin->value());
 	result.websocket_messages_per_second = static_cast<uint32_t>(message_rate_spin->value());
+	result.transport_mode = static_cast<TransportMode>(transport_combo->currentData().toUInt());
 	result.fft_size = fft_combo->currentData().toUInt();
 	result.beat_sensitivity = static_cast<uint32_t>(beat_sensitivity_spin->value());
 	result.beat_cooldown_ms = static_cast<uint32_t>(beat_cooldown_spin->value());

@@ -12,6 +12,12 @@ struct ObsTextSourceOption {
 	std::string uuid;
 };
 
+enum class TransportMode : uint32_t {
+	Both = 0,
+	NativeOnly = 1,
+	WebSocketOnly = 2,
+};
+
 struct SettingsDialogResult {
 	bool accepted = false;
 	std::string source_name;
@@ -21,6 +27,7 @@ struct SettingsDialogResult {
 	uint32_t bpm_decimal_places = 1;
 	uint16_t websocket_port = 8765;
 	uint32_t websocket_messages_per_second = 30;
+	TransportMode transport_mode = TransportMode::WebSocketOnly;
 	uint32_t fft_size = 8192;
 	uint32_t beat_sensitivity = 100;
 	uint32_t beat_cooldown_ms = 240;
@@ -34,6 +41,6 @@ show_settings_dialog(void *parent, const std::vector<std::string> &audio_sources
 		     const std::vector<ObsTextSourceOption> &text_sources, const std::string &selected_source,
 		     const std::string &selected_bpm_text_source, const std::string &selected_bpm_text_source_uuid,
 		     const std::string &bpm_text_format, uint32_t bpm_decimal_places, uint16_t websocket_port,
-		     uint32_t websocket_messages_per_second, uint32_t fft_size, uint32_t beat_sensitivity,
-		     uint32_t beat_cooldown_ms, uint32_t transient_sensitivity, uint32_t transient_cooldown_ms,
-		     bool debug_logging);
+		     uint32_t websocket_messages_per_second, TransportMode transport_mode, uint32_t fft_size,
+		     uint32_t beat_sensitivity, uint32_t beat_cooldown_ms, uint32_t transient_sensitivity,
+		     uint32_t transient_cooldown_ms, bool debug_logging);

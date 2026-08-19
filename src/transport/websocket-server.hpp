@@ -4,6 +4,7 @@
 #pragma once
 
 #include <atomic>
+#include <condition_variable>
 #include <cstdint>
 #include <mutex>
 #include <string>
@@ -20,6 +21,7 @@ public:
 	bool start(uint16_t port);
 	void stop();
 	void publish(std::string message);
+	bool has_clients() const;
 	void set_debug_logging(bool enabled);
 
 private:
@@ -27,8 +29,10 @@ private:
 
 	std::atomic<bool> running_{false};
 	std::atomic<bool> debug_logging_{false};
+	std::atomic<uint32_t> client_count_{0};
 	std::thread thread_;
 	std::mutex message_mutex_;
+	std::condition_variable message_ready_;
 	std::string latest_message_;
 	uint64_t generation_ = 0;
 };

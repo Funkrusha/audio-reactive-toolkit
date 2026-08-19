@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ART transport benchmark</title>
+  <style>
+    :root { color-scheme: dark; font: 15px system-ui, sans-serif; }
+    body { margin: 22px; background: #0d1118; color: #e8eef8; }
+    header { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+    h1 { margin: 0 0 18px; }
+    #status { color: #78e4b4; }
+    .grid { display: grid; grid-template-columns: repeat(4, minmax(140px, 1fr)); gap: 10px; }
+    section { background: #171d28; border: 1px solid #30394a; border-radius: 8px; padding: 13px; }
+    section span { display: block; color: #9daac0; }
+    section strong { display: block; margin-top: 5px; font-size: 1.45rem; font-variant-numeric: tabular-nums; }
+    canvas { width: 100%; height: 180px; margin: 14px 0; background: #080a0f; }
+    button { padding: 8px 13px; margin-right: 8px; }
+    textarea { display: block; width: 100%; min-height: 190px; box-sizing: border-box; margin-top: 14px; padding: 10px; background: #080a0f; color: #dce7f8; }
+    code { color: #a8d8ff; }
+  </style>
+</head>
+<body>
+  <header><h1>ART transport benchmark</h1><div id="status">Starting…</div></header>
+  <p>Transport: <code id="transport"></code> · rendering: <code id="rendering"></code> · runtime: <code id="runtime">0 s</code></p>
+  <div class="grid">
+    <section><span>Received rate</span><strong id="rate">0 Hz</strong></section>
+    <section><span>Dropped messages</span><strong id="drops">0</strong></section>
+    <section><span>Latency mean</span><strong id="mean">-- ms</strong></section>
+    <section><span>Latency p95 / p99</span><strong id="percentiles">-- / --</strong></section>
+    <section><span>Jitter mean</span><strong id="jitter">-- ms</strong></section>
+    <section><span>Interval p95</span><strong id="interval">-- ms</strong></section>
+    <section><span>Messages</span><strong id="messages">0</strong></section>
+    <section><span>Payload mean</span><strong id="payload">-- B</strong></section>
+  </div>
+  <canvas id="spectrum" width="1280" height="180"></canvas>
+  <button id="copy">JSON kopieren</button><button id="show">JSON anzeigen</button><button id="reset">Reset</button>
+  <textarea id="result" hidden readonly aria-label="Benchmark JSON result"></textarea>
+  <p>Use <code>?transport=native</code> or <code>?transport=websocket</code>. Add <code>&amp;render=0</code> to measure transport without drawing.</p>
+  <script src="transport-benchmark.js"></script>
+</body>
+</html>
