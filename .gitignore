@@ -6,6 +6,7 @@
 !/build-aux
 !/cmake
 !/data
+!/docs
 !/installer
 !/src
 !.clang-format
@@ -17,11 +18,9 @@
 !CHANGELOG.md
 !CMakeLists.txt
 !CMakePresets.json
-!HELP.md
 !LICENSE
 !README.md
 !THIRD_PARTY_NOTICES.md
-!WEBSOCKET.md
 
 # Exclude lock files
 *.lock.json

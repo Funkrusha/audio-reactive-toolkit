@@ -5,7 +5,6 @@ const canvas = document.getElementById('visualizer');
 const status = document.getElementById('status');
 const tempo = document.getElementById('tempo');
 const bpmValue = document.getElementById('bpm-value');
-const configuredPort = Number(new URLSearchParams(window.location.search).get('port')) || 8765;
 
 const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: 'high-performance' });
 renderer.setClearColor(0x000000, 0);
@@ -90,8 +89,6 @@ let historyAccumulator = 0;
 let beatPulse = 0;
 let transientPulse = 0;
 let shockProgress = 1;
-let socket;
-let reconnectTimer;
 
 function scaleAudio(value, gain = 4) {
   return Math.min(1, Math.max(0, Number(value) * gain));
@@ -102,12 +99,13 @@ function smooth(current, next, attack = 0.5, release = 0.11) {
 }
 
 function setStatus(connected) {
-  status.textContent = connected ? 'Connected' : 'Disconnected';
+  status.textContent = connected ? `Connected · ${ART.transportLabel}` : 'Disconnected';
   status.className = `status ${connected ? 'connected' : 'disconnected'}`;
 }
 
 function updateAudio(data) {
   if (data.version !== 1 || !data.bands) return;
+  setStatus(true);
   target.rms = scaleAudio(data.rms, 3.4);
   target.peak = scaleAudio(data.peak, 2.3);
   target.bass = scaleAudio(data.bands.bass, 4.6);
@@ -128,20 +126,6 @@ function updateAudio(data) {
     bpmValue.textContent = Number.isFinite(bpm) && bpm > 0 ? bpm.toFixed(1) : '—';
     tempo.classList.toggle('locked', Boolean(data.tempo.locked));
   }
-}
-
-function connect() {
-  clearTimeout(reconnectTimer);
-  socket = new WebSocket(`ws://127.0.0.1:${configuredPort}`);
-  socket.addEventListener('open', () => setStatus(true));
-  socket.addEventListener('message', event => {
-    try { updateAudio(JSON.parse(event.data)); } catch { /* Ignore malformed or future messages. */ }
-  });
-  socket.addEventListener('close', () => {
-    setStatus(false);
-    reconnectTimer = setTimeout(connect, 1500);
-  });
-  socket.addEventListener('error', () => socket.close());
 }
 
 function resize() {
@@ -214,5 +198,6 @@ function animate() {
 
 window.addEventListener('resize', resize);
 resize();
-connect();
+ART.on('frame', updateAudio);
+ART.connect();
 animate();

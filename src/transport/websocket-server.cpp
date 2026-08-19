@@ -263,15 +263,24 @@ void WebSocketServer::stop()
 {
 	if (!running_.exchange(false))
 		return;
+	message_ready_.notify_all();
 	if (thread_.joinable())
 		thread_.join();
 }
 
 void WebSocketServer::publish(std::string message)
 {
-	std::lock_guard lock(message_mutex_);
-	latest_message_ = std::move(message);
-	++generation_;
+	{
+		std::lock_guard lock(message_mutex_);
+		latest_message_ = std::move(message);
+		++generation_;
+	}
+	message_ready_.notify_one();
+}
+
+bool WebSocketServer::has_clients() const
+{
+	return client_count_.load(std::memory_order_acquire) != 0;
 }
 
 void WebSocketServer::set_debug_logging(bool enabled)
@@ -329,6 +338,7 @@ void WebSocketServer::run(uint16_t port)
 		uint64_t sent_generation;
 	};
 	std::vector<ClientConnection> clients;
+	uint64_t observed_generation = 0;
 
 	while (running_.load()) {
 		socket_handle accepted = accept(listener, nullptr, nullptr);
@@ -344,16 +354,25 @@ void WebSocketServer::run(uint16_t port)
 				if (debug_logging_.load(std::memory_order_relaxed))
 					obs_log(LOG_INFO, "WebSocket browser client connected");
 				clients.push_back({accepted, 0});
+				client_count_.store(static_cast<uint32_t>(clients.size()), std::memory_order_release);
 			}
 		}
 
 		std::string message;
-		uint64_t generation = 0;
+		uint64_t generation = observed_generation;
 		{
-			std::lock_guard lock(message_mutex_);
+			std::unique_lock lock(message_mutex_);
+			if (!clients.empty()) {
+				message_ready_.wait_for(
+					lock, std::chrono::milliseconds(10), [this, observed_generation] {
+						return !running_.load() || generation_ != observed_generation;
+					});
+			}
 			generation = generation_;
-			message = latest_message_;
+			if (generation != observed_generation)
+				message = latest_message_;
 		}
+		observed_generation = generation;
 
 		for (auto client = clients.begin(); client != clients.end();) {
 			if (generation != client->sent_generation && !message.empty()) {
@@ -362,6 +381,8 @@ void WebSocketServer::run(uint16_t port)
 						obs_log(LOG_INFO, "WebSocket browser client disconnected");
 					close_socket(client->socket);
 					client = clients.erase(client);
+					client_count_.store(static_cast<uint32_t>(clients.size()),
+							    std::memory_order_release);
 					continue;
 				} else {
 					client->sent_generation = generation;
@@ -370,11 +391,13 @@ void WebSocketServer::run(uint16_t port)
 			++client;
 		}
 
-		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+		if (clients.empty())
+			std::this_thread::sleep_for(std::chrono::milliseconds(10));
 	}
 
 	for (const auto &client : clients)
 		close_socket(client.socket);
+	client_count_.store(0, std::memory_order_release);
 	close_socket(listener);
 #ifdef _WIN32
 	WSACleanup();

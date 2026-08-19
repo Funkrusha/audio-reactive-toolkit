@@ -42,10 +42,15 @@ target_sources(
   ${CMAKE_PROJECT_NAME}
   PRIVATE
     src/plugin-main.cpp
+    src/settings.hpp
     src/audio/audio-capture.cpp
     src/audio/audio-capture.hpp
     src/analysis/tempo-estimator.cpp
     src/analysis/tempo-estimator.hpp
+    src/transport/art-protocol.cpp
+    src/transport/art-protocol.hpp
+    src/transport/browser-event-transport.cpp
+    src/transport/browser-event-transport.hpp
     src/transport/websocket-server.cpp
     src/transport/websocket-server.hpp
     src/ui/settings-dialog.cpp

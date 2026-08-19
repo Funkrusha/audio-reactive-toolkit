@@ -7,9 +7,6 @@ const elements = Object.fromEntries(
 );
 
 const scale = value => Math.min(100, Math.max(0, value * 300));
-let socket;
-let reconnectTimer;
-const configuredPort = Number(new URLSearchParams(window.location.search).get('port')) || 8765;
 const spectrumBars = Array.from({ length: 32 }, () => {
   const bar = document.createElement('div');
   bar.className = 'spectrum-bar';
@@ -41,12 +38,13 @@ function triggerEvent(name, strength) {
 }
 
 function setStatus(connected) {
-  elements.status.textContent = connected ? 'Connected' : 'Disconnected';
+  elements.status.textContent = connected ? `Connected · ${ART.transportLabel}` : 'Disconnected';
   elements.status.className = `status ${connected ? 'connected' : 'disconnected'}`;
 }
 
 function update(data) {
   if (data.version !== 1 || !data.bands) return;
+  setStatus(true);
   for (const name of ['rms', 'peak']) {
     elements[name].style.width = `${scale(data[name])}%`;
     elements[`${name}-value`].value = Number(data[name]).toFixed(3);
@@ -71,18 +69,5 @@ function update(data) {
   }
 }
 
-function connect() {
-  clearTimeout(reconnectTimer);
-  socket = new WebSocket(`ws://127.0.0.1:${configuredPort}`);
-  socket.addEventListener('open', () => setStatus(true));
-  socket.addEventListener('message', event => {
-    try { update(JSON.parse(event.data)); } catch { /* Ignore incomplete or future messages. */ }
-  });
-  socket.addEventListener('close', () => {
-    setStatus(false);
-    reconnectTimer = setTimeout(connect, 1500);
-  });
-  socket.addEventListener('error', () => socket.close());
-}
-
-connect();
+ART.on('frame', update);
+ART.connect();

@@ -20,12 +20,19 @@ not accessible from other computers. Multiple local clients can connect at the s
 ART sends the most recent analysis snapshot whenever a new snapshot is available. Clients should reconnect after OBS
 or the plugin restarts.
 
+ART does not serialize WebSocket payloads while no clients are connected. The analysis pipeline continues running, and
+publishing resumes on the next configured update after a client completes its handshake. For connected clients,
+publishing wakes the sender thread immediately. A short polling interval remains only for accepting new connections,
+not for scheduling analyzer frames.
+
 ## Message structure
 
 ```json
 {
   "version": 1,
   "timestamp": 1264875234,
+  "sentAt": 1776600123456,
+  "sequence": 1842,
   "active": true,
   "rms": 0.084271,
   "peak": 0.312408,
@@ -66,9 +73,11 @@ or the plugin restarts.
 | --- | --- | --- |
 | `version` | integer | Message schema version. Version documented here is `1`. |
 | `timestamp` | integer | Monotonic time in milliseconds. Use it for relative timing, not as a wall-clock or Unix timestamp. |
+| `sentAt` | integer | Unix time in milliseconds when ART serialized the message; intended for same-host latency measurements. |
+| `sequence` | integer | Increasing WebSocket message number; gaps indicate missed or overwritten messages. |
 | `active` | boolean | `true` after audio data has been received from the selected OBS source. |
 | `rms` | number | Root-mean-square level of the current audio buffer. |
-| `peak` | number | Highest absolute sample level in the current audio buffer. |
+| `peak` | number | Highest absolute sample level of the current audio buffer. |
 | `bands.bass` | number | Low-frequency energy derived from frequencies below approximately 250 Hz. |
 | `bands.mid` | number | Mid-frequency energy derived from approximately 250 Hz to 4 kHz. |
 | `bands.high` | number | High-frequency energy derived from frequencies above approximately 4 kHz. |

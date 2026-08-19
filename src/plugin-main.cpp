@@ -8,6 +8,9 @@
 
 #include "audio/audio-capture.hpp"
 #include "analysis/tempo-estimator.hpp"
+#include "settings.hpp"
+#include "transport/art-protocol.hpp"
+#include "transport/browser-event-transport.hpp"
 #include "transport/websocket-server.hpp"
 #include "ui/settings-dialog.hpp"
 
@@ -23,11 +26,13 @@ OBS_MODULE_USE_DEFAULT_LOCALE(PLUGIN_NAME, "en-US")
 namespace {
 AudioCapture audio_capture;
 WebSocketServer websocket_server;
+BrowserEventTransport browser_event_transport;
 TempoEstimator tempo_estimator;
 float websocket_publish_timer = 0.0F;
 std::string selected_source_name;
 uint16_t websocket_port = 8765;
 uint32_t websocket_messages_per_second = 30;
+TransportMode transport_mode = TransportMode::WebSocketOnly;
 uint32_t fft_size = 8192;
 uint32_t beat_sensitivity = 100;
 uint32_t beat_cooldown_ms = 240;
@@ -45,6 +50,28 @@ uint32_t bpm_decimal_places = 1;
 std::string last_bpm_text;
 float bpm_text_update_timer = 1.0F;
 bool bpm_text_source_warning_logged = false;
+uint64_t websocket_sequence = 0;
+uint64_t native_frame_sequence = 0;
+
+bool native_transport_enabled(TransportMode mode)
+{
+	return mode != TransportMode::WebSocketOnly;
+}
+
+bool websocket_transport_enabled(TransportMode mode)
+{
+	return mode != TransportMode::NativeOnly;
+}
+
+void publish_native_events(const AnalysisSnapshot &snapshot, const TempoSnapshot &tempo, bool beat_detected,
+			   bool transient_detected, long long timestamp, long long sent_at)
+{
+	const ArtProtocol::Frame protocol_frame = ArtProtocol::make_frame(
+		snapshot, tempo, beat_detected, transient_detected, timestamp, sent_at, ++native_frame_sequence);
+	obs_data_t *frame = ArtProtocol::serialize_native(protocol_frame);
+	browser_event_transport.emit(ArtProtocol::Event::frame, frame);
+	obs_data_release(frame);
+}
 
 void update_bpm_text_source(const TempoSnapshot &tempo)
 {
@@ -104,38 +131,50 @@ void update_bpm_text_source(const TempoSnapshot &tempo)
 
 void load_settings()
 {
-	char *path = obs_module_config_path("settings.json");
-	obs_data_t *settings = obs_data_create_from_json_file_safe(path, "bak");
+	char *path = obs_module_config_path(Settings::file_name);
+	obs_data_t *settings = obs_data_create_from_json_file_safe(path, Settings::backup_extension);
 	if (settings) {
-		selected_source_name = obs_data_get_string(settings, "audio_source");
-		if (obs_data_has_user_value(settings, "bpm_text_source"))
-			selected_bpm_text_source_name = obs_data_get_string(settings, "bpm_text_source");
-		if (obs_data_has_user_value(settings, "bpm_text_source_uuid"))
-			selected_bpm_text_source_uuid = obs_data_get_string(settings, "bpm_text_source_uuid");
-		if (obs_data_has_user_value(settings, "bpm_text_format")) {
-			bpm_text_format = obs_data_get_string(settings, "bpm_text_format");
+		selected_source_name = obs_data_get_string(settings, Settings::Field::audio_source);
+		if (obs_data_has_user_value(settings, Settings::Field::bpm_text_source))
+			selected_bpm_text_source_name = obs_data_get_string(settings, Settings::Field::bpm_text_source);
+		if (obs_data_has_user_value(settings, Settings::Field::bpm_text_source_uuid))
+			selected_bpm_text_source_uuid =
+				obs_data_get_string(settings, Settings::Field::bpm_text_source_uuid);
+		if (obs_data_has_user_value(settings, Settings::Field::bpm_text_format)) {
+			bpm_text_format = obs_data_get_string(settings, Settings::Field::bpm_text_format);
 			if (bpm_text_format.empty())
 				bpm_text_format = "{bpm} BPM";
 		}
-		if (obs_data_has_user_value(settings, "bpm_decimal_places")) {
-			const int64_t saved_bpm_decimal_places = obs_data_get_int(settings, "bpm_decimal_places");
+		if (obs_data_has_user_value(settings, Settings::Field::bpm_decimal_places)) {
+			const int64_t saved_bpm_decimal_places =
+				obs_data_get_int(settings, Settings::Field::bpm_decimal_places);
 			if (saved_bpm_decimal_places >= 0 && saved_bpm_decimal_places <= 2)
 				bpm_decimal_places = static_cast<uint32_t>(saved_bpm_decimal_places);
 		}
-		const int64_t saved_port = obs_data_get_int(settings, "websocket_port");
+		const int64_t saved_port = obs_data_get_int(settings, Settings::Field::websocket_port);
 		if (saved_port >= 1024 && saved_port <= 65535)
 			websocket_port = static_cast<uint16_t>(saved_port);
-		const int64_t saved_message_rate = obs_data_get_int(settings, "websocket_messages_per_second");
-		const int64_t saved_fft_size = obs_data_get_int(settings, "fft_size");
+		const int64_t saved_message_rate =
+			obs_data_get_int(settings, Settings::Field::websocket_messages_per_second);
+		const int64_t saved_fft_size = obs_data_get_int(settings, Settings::Field::fft_size);
 		if (saved_message_rate >= 1 && saved_message_rate <= 60)
 			websocket_messages_per_second = static_cast<uint32_t>(saved_message_rate);
+		if (obs_data_has_user_value(settings, Settings::Field::transport_mode)) {
+			const int64_t saved_transport_mode =
+				obs_data_get_int(settings, Settings::Field::transport_mode);
+			if (saved_transport_mode >= static_cast<int64_t>(TransportMode::Both) &&
+			    saved_transport_mode <= static_cast<int64_t>(TransportMode::WebSocketOnly))
+				transport_mode = static_cast<TransportMode>(saved_transport_mode);
+		}
 		if (saved_fft_size == 2048 || saved_fft_size == 4096 || saved_fft_size == 8192 ||
 		    saved_fft_size == 16384)
 			fft_size = static_cast<uint32_t>(saved_fft_size);
-		const int64_t saved_beat_sensitivity = obs_data_get_int(settings, "beat_sensitivity");
-		const int64_t saved_beat_cooldown = obs_data_get_int(settings, "beat_cooldown_ms");
-		const int64_t saved_transient_sensitivity = obs_data_get_int(settings, "transient_sensitivity");
-		const int64_t saved_transient_cooldown = obs_data_get_int(settings, "transient_cooldown_ms");
+		const int64_t saved_beat_sensitivity = obs_data_get_int(settings, Settings::Field::beat_sensitivity);
+		const int64_t saved_beat_cooldown = obs_data_get_int(settings, Settings::Field::beat_cooldown_ms);
+		const int64_t saved_transient_sensitivity =
+			obs_data_get_int(settings, Settings::Field::transient_sensitivity);
+		const int64_t saved_transient_cooldown =
+			obs_data_get_int(settings, Settings::Field::transient_cooldown_ms);
 		if (saved_beat_sensitivity >= 25 && saved_beat_sensitivity <= 200)
 			beat_sensitivity = static_cast<uint32_t>(saved_beat_sensitivity);
 		if (saved_beat_cooldown >= 80 && saved_beat_cooldown <= 1000)
@@ -144,7 +183,7 @@ void load_settings()
 			transient_sensitivity = static_cast<uint32_t>(saved_transient_sensitivity);
 		if (saved_transient_cooldown >= 20 && saved_transient_cooldown <= 500)
 			transient_cooldown_ms = static_cast<uint32_t>(saved_transient_cooldown);
-		debug_logging = obs_data_get_bool(settings, "debug_logging");
+		debug_logging = obs_data_get_bool(settings, Settings::Field::debug_logging);
 		obs_data_release(settings);
 	}
 	bfree(path);
@@ -155,22 +194,23 @@ void save_settings()
 	char *directory = obs_module_config_path("");
 	os_mkdirs(directory);
 	bfree(directory);
-	char *path = obs_module_config_path("settings.json");
+	char *path = obs_module_config_path(Settings::file_name);
 	obs_data_t *settings = obs_data_create();
-	obs_data_set_string(settings, "audio_source", selected_source_name.c_str());
-	obs_data_set_string(settings, "bpm_text_source", selected_bpm_text_source_name.c_str());
-	obs_data_set_string(settings, "bpm_text_source_uuid", selected_bpm_text_source_uuid.c_str());
-	obs_data_set_string(settings, "bpm_text_format", bpm_text_format.c_str());
-	obs_data_set_int(settings, "bpm_decimal_places", bpm_decimal_places);
-	obs_data_set_int(settings, "websocket_port", websocket_port);
-	obs_data_set_int(settings, "websocket_messages_per_second", websocket_messages_per_second);
-	obs_data_set_int(settings, "fft_size", fft_size);
-	obs_data_set_int(settings, "beat_sensitivity", beat_sensitivity);
-	obs_data_set_int(settings, "beat_cooldown_ms", beat_cooldown_ms);
-	obs_data_set_int(settings, "transient_sensitivity", transient_sensitivity);
-	obs_data_set_int(settings, "transient_cooldown_ms", transient_cooldown_ms);
-	obs_data_set_bool(settings, "debug_logging", debug_logging);
-	if (!obs_data_save_json_safe(settings, path, "tmp", "bak"))
+	obs_data_set_string(settings, Settings::Field::audio_source, selected_source_name.c_str());
+	obs_data_set_string(settings, Settings::Field::bpm_text_source, selected_bpm_text_source_name.c_str());
+	obs_data_set_string(settings, Settings::Field::bpm_text_source_uuid, selected_bpm_text_source_uuid.c_str());
+	obs_data_set_string(settings, Settings::Field::bpm_text_format, bpm_text_format.c_str());
+	obs_data_set_int(settings, Settings::Field::bpm_decimal_places, bpm_decimal_places);
+	obs_data_set_int(settings, Settings::Field::websocket_port, websocket_port);
+	obs_data_set_int(settings, Settings::Field::websocket_messages_per_second, websocket_messages_per_second);
+	obs_data_set_int(settings, Settings::Field::transport_mode, static_cast<int64_t>(transport_mode));
+	obs_data_set_int(settings, Settings::Field::fft_size, fft_size);
+	obs_data_set_int(settings, Settings::Field::beat_sensitivity, beat_sensitivity);
+	obs_data_set_int(settings, Settings::Field::beat_cooldown_ms, beat_cooldown_ms);
+	obs_data_set_int(settings, Settings::Field::transient_sensitivity, transient_sensitivity);
+	obs_data_set_int(settings, Settings::Field::transient_cooldown_ms, transient_cooldown_ms);
+	obs_data_set_bool(settings, Settings::Field::debug_logging, debug_logging);
+	if (!obs_data_save_json_safe(settings, path, Settings::temporary_extension, Settings::backup_extension))
 		obs_log(LOG_WARNING, "could not save settings to '%s'", path);
 	obs_data_release(settings);
 	bfree(path);
@@ -213,13 +253,14 @@ void show_settings(void *)
 	const SettingsDialogResult result = show_settings_dialog(
 		obs_frontend_get_main_window(), sources, text_sources, selected_source_name,
 		selected_bpm_text_source_name, selected_bpm_text_source_uuid, bpm_text_format, bpm_decimal_places,
-		websocket_port, websocket_messages_per_second, fft_size, beat_sensitivity, beat_cooldown_ms,
-		transient_sensitivity, transient_cooldown_ms, debug_logging);
+		websocket_port, websocket_messages_per_second, transport_mode, fft_size, beat_sensitivity,
+		beat_cooldown_ms, transient_sensitivity, transient_cooldown_ms, debug_logging);
 	if (!result.accepted)
 		return;
 	debug_logging = result.debug_logging;
 	audio_capture.set_debug_logging(debug_logging);
 	websocket_server.set_debug_logging(debug_logging);
+	browser_event_transport.set_debug_logging(debug_logging);
 	if (selected_bpm_text_source_uuid != result.bpm_text_source_uuid ||
 	    selected_bpm_text_source_name != result.bpm_text_source_name) {
 		selected_bpm_text_source_name = result.bpm_text_source_name;
@@ -242,11 +283,15 @@ void show_settings(void *)
 		selected_source_name = result.source_name;
 	}
 
-	if (result.websocket_port != websocket_port) {
+	const bool websocket_was_enabled = websocket_transport_enabled(transport_mode);
+	const bool websocket_will_be_enabled = websocket_transport_enabled(result.transport_mode);
+	const bool websocket_port_changed = result.websocket_port != websocket_port;
+	if (websocket_was_enabled && (!websocket_will_be_enabled || websocket_port_changed))
 		websocket_server.stop();
-		websocket_port = result.websocket_port;
+	websocket_port = result.websocket_port;
+	transport_mode = result.transport_mode;
+	if (websocket_will_be_enabled && (!websocket_was_enabled || websocket_port_changed))
 		websocket_server.start(websocket_port);
-	}
 	websocket_messages_per_second = result.websocket_messages_per_second;
 	websocket_publish_timer = 0.0F;
 	fft_size = result.fft_size;
@@ -298,25 +343,22 @@ void plugin_tick(void *, float seconds)
 				       .count();
 	const TempoSnapshot tempo = tempo_estimator.snapshot();
 	update_bpm_text_source(tempo);
-	char message_header[512];
-	std::snprintf(message_header, sizeof(message_header),
-		      "{\"version\":1,\"timestamp\":%lld,\"active\":%s,\"rms\":%.6f,\"peak\":%.6f,"
-		      "\"bands\":{\"bass\":%.6f,\"mid\":%.6f,\"high\":%.6f},"
-		      "\"beat\":{\"detected\":%s,\"strength\":%.6f},"
-		      "\"transient\":{\"detected\":%s,\"strength\":%.6f},"
-		      "\"tempo\":{\"bpm\":%.2f,\"confidence\":%.6f,\"locked\":%s},\"fft32\":[",
-		      static_cast<long long>(timestamp), snapshot.active ? "true" : "false", snapshot.rms,
-		      snapshot.peak, snapshot.bass, snapshot.mid, snapshot.high, beat_detected ? "true" : "false",
-		      snapshot.beat_strength, transient_detected ? "true" : "false", snapshot.transient_strength,
-		      tempo.bpm, tempo.confidence, tempo.locked ? "true" : "false");
-	std::string message(message_header);
-	char band_value[32];
-	for (size_t band = 0; band < snapshot.fft_bands.size(); ++band) {
-		std::snprintf(band_value, sizeof(band_value), band == 0 ? "%.6f" : ",%.6f", snapshot.fft_bands[band]);
-		message += band_value;
+	if (native_transport_enabled(transport_mode)) {
+		const auto native_sent_at = std::chrono::duration_cast<std::chrono::milliseconds>(
+						    std::chrono::system_clock::now().time_since_epoch())
+						    .count();
+		publish_native_events(snapshot, tempo, beat_detected, transient_detected,
+				      static_cast<long long>(timestamp), static_cast<long long>(native_sent_at));
 	}
-	message += "]}";
-	websocket_server.publish(message);
+	if (!websocket_transport_enabled(transport_mode) || !websocket_server.has_clients())
+		return;
+	const auto websocket_timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
+						 std::chrono::system_clock::now().time_since_epoch())
+						 .count();
+	const ArtProtocol::Frame protocol_frame = ArtProtocol::make_frame(snapshot, tempo, beat_detected,
+									  transient_detected, timestamp,
+									  websocket_timestamp, ++websocket_sequence);
+	websocket_server.publish(ArtProtocol::serialize_websocket(protocol_frame));
 }
 } // namespace
 
@@ -331,9 +373,11 @@ bool obs_module_load(void)
 	audio_capture.set_debug_logging(debug_logging);
 	audio_capture.set_fft_size(fft_size);
 	websocket_server.set_debug_logging(debug_logging);
+	browser_event_transport.set_debug_logging(debug_logging);
 	audio_capture.configure_detection(beat_sensitivity, beat_cooldown_ms, transient_sensitivity,
 					  transient_cooldown_ms);
-	websocket_server.start(websocket_port);
+	if (websocket_transport_enabled(transport_mode))
+		websocket_server.start(websocket_port);
 	obs_frontend_add_event_callback(frontend_event, nullptr);
 	obs_frontend_add_tools_menu_item(obs_module_text("Tools.Settings"), show_settings, nullptr);
 	obs_add_tick_callback(plugin_tick, nullptr);
@@ -341,11 +385,17 @@ bool obs_module_load(void)
 	return true;
 }
 
+MODULE_EXPORT void obs_module_post_load(void)
+{
+	browser_event_transport.initialize();
+}
+
 void obs_module_unload(void)
 {
 	obs_remove_tick_callback(plugin_tick, nullptr);
 	obs_frontend_remove_event_callback(frontend_event, nullptr);
 	audio_capture.detach();
+	browser_event_transport.shutdown();
 	websocket_server.stop();
 	if (debug_logging)
 		obs_log(LOG_INFO, "unloaded");
