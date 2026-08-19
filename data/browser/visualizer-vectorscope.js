@@ -8,7 +8,6 @@ const tempo = document.getElementById('tempo');
 const bpmValue = document.getElementById('bpm-value');
 const yLabel = document.getElementById('y-label');
 const parameters = new URLSearchParams(window.location.search);
-const configuredPort = Number(parameters.get('port')) || 8765;
 const axisMode = parameters.get('axes') === 'bass-high' ? 'bass-high' : 'bass-mid';
 const yBand = axisMode === 'bass-high' ? 'high' : 'mid';
 yLabel.textContent = yBand.toUpperCase();
@@ -20,17 +19,16 @@ const value = { x: 0, y: 0 };
 const ceiling = { x: 0.04, y: 0.04 };
 let beatPulse = 0;
 let transientPulse = 0;
-let socket;
-let reconnectTimer;
 let lastTime = performance.now();
 
 function setStatus(connected) {
-  status.textContent = connected ? 'Connected' : 'Disconnected';
+  status.textContent = connected ? `Connected · ${ART.transportLabel}` : 'Disconnected';
   status.className = `status ${connected ? 'connected' : 'disconnected'}`;
 }
 
 function updateAudio(data) {
   if (data.version !== 1 || !data.bands) return;
+  setStatus(true);
   const bass = Math.max(0, Number(data.bands.bass) || 0);
   const secondary = Math.max(0, Number(data.bands[yBand]) || 0);
   ceiling.x = Math.max(bass, ceiling.x * 0.997);
@@ -45,20 +43,6 @@ function updateAudio(data) {
     bpmValue.textContent = Number.isFinite(bpm) && bpm > 0 ? bpm.toFixed(1) : '\u2014';
     tempo.classList.toggle('locked', Boolean(data.tempo.locked));
   }
-}
-
-function connect() {
-  clearTimeout(reconnectTimer);
-  socket = new WebSocket(`ws://127.0.0.1:${configuredPort}`);
-  socket.addEventListener('open', () => setStatus(true));
-  socket.addEventListener('message', event => {
-    try { updateAudio(JSON.parse(event.data)); } catch { /* Ignore malformed or future messages. */ }
-  });
-  socket.addEventListener('close', () => {
-    setStatus(false);
-    reconnectTimer = setTimeout(connect, 1500);
-  });
-  socket.addEventListener('error', () => socket.close());
 }
 
 function resize() {
@@ -142,5 +126,6 @@ function animate(now) {
 
 window.addEventListener('resize', resize);
 resize();
-connect();
+ART.on('frame', updateAudio);
+ART.connect();
 requestAnimationFrame(animate);
