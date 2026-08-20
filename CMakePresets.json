@@ -129,6 +129,13 @@
       "configuration": "RelWithDebInfo"
     },
     {
+      "name": "windows-x64-release",
+      "configurePreset": "windows-x64",
+      "displayName": "Windows x64 Release",
+      "description": "Windows build for x64 (Release configuration, no debug info)",
+      "configuration": "Release"
+    },
+    {
       "name": "ubuntu-x86_64",
       "configurePreset": "ubuntu-x86_64",
       "displayName": "Ubuntu x86_64",

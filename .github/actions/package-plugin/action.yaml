@@ -8,6 +8,10 @@ inputs:
     description: Build configuration
     required: false
     default: RelWithDebInfo
+  macOSArchitecture:
+    description: macOS artifact architecture (arm64 or universal)
+    required: false
+    default: universal
   codesign:
     description: Enable codesigning (macOS only)
     required: false
@@ -60,7 +64,7 @@ runs:
       run: |
         : Run macOS Packaging
 
-        local -a package_args=(--config ${{ inputs.config }})
+        local -a package_args=(--config ${{ inputs.config }} --architecture ${{ inputs.macOSArchitecture }})
         if (( ${+RUNNER_DEBUG} )) package_args+=(--debug)
 
         if [[ '${{ inputs.codesign }}' == 'true' ]] package_args+=(--codesign)

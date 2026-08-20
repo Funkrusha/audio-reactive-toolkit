@@ -4,6 +4,11 @@
 
 - [User guide](user-guide.md) – installation, setup, visualizers, and troubleshooting
 
+## Native filters
+
+- [ART Custom Shader filter](custom-shader-filter.md) – write your own audio-reactive HLSL shader, the
+  `ArtModulation` binding layer it's built on, and the bundled example
+
 ## Integrators
 
 - [ART JavaScript client](javascript-client.md) - shared `frame`, `beat`, and `bpm` API for WebSocket and Native

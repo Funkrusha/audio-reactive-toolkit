@@ -1,0 +1,116 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1400" viewBox="0 0 1200 1400">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#16D9FF"/>
+      <stop offset="38%" stop-color="#0B7BFF"/>
+      <stop offset="64%" stop-color="#7A2CFF"/>
+      <stop offset="100%" stop-color="#FF16B7"/>
+    </linearGradient>
+    <linearGradient id="metal" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="55%" stop-color="#F4F5F7"/>
+      <stop offset="100%" stop-color="#C7CCD4"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Transparent background -->
+
+  <!-- ICON -->
+  <g transform="translate(600 380)">
+    <!-- Broken circle -->
+    <path d="M -205,-255 A 327 327 0 0 1 -20,-323"
+          fill="none" stroke="url(#grad)" stroke-width="28" stroke-linecap="butt"/>
+    <path d="M 20,-323 A 327 327 0 0 1 205,-255
+             A 327 327 0 0 1 323,-20"
+          fill="none" stroke="url(#grad)" stroke-width="28" stroke-linecap="butt"/>
+    <path d="M 323,20 A 327 327 0 0 1 20,323"
+          fill="none" stroke="url(#grad)" stroke-width="28" stroke-linecap="butt"/>
+    <path d="M -20,323 A 327 327 0 0 1 -323,20"
+          fill="none" stroke="url(#grad)" stroke-width="28" stroke-linecap="butt"/>
+    <path d="M -323,-20 A 327 327 0 0 1 -255,-205"
+          fill="none" stroke="url(#grad)" stroke-width="28" stroke-linecap="butt"/>
+
+    <!-- Equalizer bars -->
+    <g fill="url(#grad)">
+      <rect x="-220" y="-35" width="42" height="155"/>
+      <rect x="-164" y="-85" width="42" height="205"/>
+      <rect x="-108" y="-145" width="42" height="265"/>
+      <rect x="-52"  y="-205" width="42" height="325"/>
+      <rect x="4"    y="-250" width="42" height="370"/>
+      <rect x="60"   y="-200" width="42" height="320"/>
+      <rect x="116"  y="-140" width="42" height="260"/>
+      <rect x="172"  y="-80" width="42" height="200"/>
+    </g>
+
+    <!-- Waveforms -->
+    <path d="M -470,0
+             L -430,-3 L -410,-18 L -395,15 L -380,-85 L -360,75
+             L -340,-35 L -320,20 L -300,-2 L -255,0"
+          fill="none" stroke="url(#grad)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M 255,0
+             L 300,-2 L 320,20 L 340,-35 L 360,75 L 380,-85
+             L 395,15 L 410,-18 L 430,-3 L 470,0"
+          fill="none" stroke="url(#grad)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- A mark -->
+    <path d="M -130,155 L -50,-35
+             Q 0,-155 50,-35
+             L 130,155
+             L 82,155
+             L 0,-55
+             L -82,155 Z"
+          fill="url(#metal)"/>
+    <circle cx="0" cy="95" r="23" fill="url(#metal)"/>
+  </g>
+
+  <!-- ART custom wordmark -->
+  <g transform="translate(120 820)" fill="url(#metal)">
+    <!-- A -->
+    <path d="M 0,250 L 95,0 H 150 L 245,250 H 188 L 122,68 L 55,250 Z"/>
+    <circle cx="122" cy="190" r="22"/>
+
+    <!-- R -->
+    <path d="M 310,0 H 500
+             Q 590,0 590,82
+             Q 590,150 520,168
+             L 600,250 H 530
+             L 460,176 H 367 V250 H 310 Z
+             M 367,52 V124 H 493
+             Q 530,124 530,88
+             Q 530,52 493,52 Z"
+          fill-rule="evenodd"/>
+
+    <!-- T -->
+    <path d="M 650,0 H 905 V58 H 807 V250 H 748 V58 H 650 Z"/>
+  </g>
+
+  <!-- Subtitle -->
+  <text x="600" y="1140"
+        text-anchor="middle"
+        font-family="Eurostile, Microgramma, Montserrat, Arial, sans-serif"
+        font-size="53"
+        font-weight="600"
+        letter-spacing="9"
+        fill="url(#grad)">AUDIO REACTIVE TOOLKIT</text>
+
+  <!-- Tagline -->
+  <g fill="#E8E9EC">
+    <text x="600" y="1220"
+          text-anchor="middle"
+          font-family="Montserrat, Arial, sans-serif"
+          font-size="34"
+          font-weight="400"
+          letter-spacing="13">SEE YOUR SOUND</text>
+
+    <text x="600" y="1295"
+          text-anchor="middle"
+          font-family="Montserrat, Arial, sans-serif"
+          font-size="28"
+          font-weight="400"
+          letter-spacing="12">FOR OBS STUDIO</text>
+  </g>
+
+  <!-- Accent lines -->
+  <rect x="150" y="1195" width="150" height="5" rx="2.5" fill="#16D9FF"/>
+  <rect x="900" y="1195" width="150" height="5" rx="2.5" fill="#FF16B7"/>
+</svg>

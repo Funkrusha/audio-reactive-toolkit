@@ -7,8 +7,18 @@ on:
         required: false
         type: boolean
         default: false
+      macOSArchitecture:
+        description: macOS architecture to build (arm64 or universal)
+        required: false
+        type: string
+        default: arm64
       buildUbuntu:
         description: Build and package the plugin for Ubuntu
+        required: false
+        type: boolean
+        default: false
+      buildWindows:
+        description: Build and package the plugin for Windows
         required: false
         type: boolean
         default: false
@@ -134,12 +144,18 @@ jobs:
           print "pluginVersion=${product_version}" >> $GITHUB_OUTPUT
 
       - uses: actions/cache/restore@v4
+        id: dependencies-cache
+        with:
+          path: ${{ github.workspace }}/.deps
+          key: ${{ runner.os }}-deps-${{ inputs.macOSArchitecture }}-${{ hashFiles('buildspec.json') }}
+
+      - uses: actions/cache/restore@v4
         id: ccache-cache
         with:
           path: ${{ github.workspace }}/.ccache
-          key: ${{ runner.os }}-ccache-${{ needs.check-event.outputs.config }}
+          key: ${{ runner.os }}-ccache-${{ inputs.macOSArchitecture }}-${{ needs.check-event.outputs.config }}-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-ccache-
+            ${{ runner.os }}-ccache-${{ inputs.macOSArchitecture }}-${{ needs.check-event.outputs.config }}-
 
       - name: Set Up Codesigning 🔑
         uses: ./.github/actions/setup-macos-codesigning
@@ -158,16 +174,18 @@ jobs:
       - name: Build Plugin 🧱
         uses: ./.github/actions/build-plugin
         with:
-          target: macos-universal
+          target: macos-${{ inputs.macOSArchitecture }}
           config: ${{ needs.check-event.outputs.config }}
+          macOSArchitecture: ${{ inputs.macOSArchitecture }}
           codesign: ${{ fromJSON(needs.check-event.outputs.codesign) && fromJSON(steps.codesign.outputs.haveCodesignIdent) }}
           codesignIdent: ${{ steps.codesign.outputs.codesignIdent }}
 
       - name: Package Plugin 📀
         uses: ./.github/actions/package-plugin
         with:
-          target: macos-universal
+          target: macos-${{ inputs.macOSArchitecture }}
           config: ${{ needs.check-event.outputs.config }}
+          macOSArchitecture: ${{ inputs.macOSArchitecture }}
           package: ${{ fromJSON(needs.check-event.outputs.package) }}
           codesign: ${{ fromJSON(needs.check-event.outputs.codesign) && fromJSON(steps.codesign.outputs.haveCodesignIdent) }}
           codesignIdent: ${{ steps.codesign.outputs.codesignIdent }}
@@ -180,21 +198,27 @@ jobs:
       - name: Upload Artifacts 📡
         uses: actions/upload-artifact@v7
         with:
-          name: ${{ steps.setup.outputs.pluginName }}-${{ steps.setup.outputs.pluginVersion }}-macos-universal-${{ needs.check-event.outputs.commitHash }}
-          path: ${{ github.workspace }}/release/${{ steps.setup.outputs.pluginName }}-${{ steps.setup.outputs.pluginVersion }}-macos-universal.*
+          name: ${{ steps.setup.outputs.pluginName }}-${{ steps.setup.outputs.pluginVersion }}-macos-${{ inputs.macOSArchitecture }}-${{ needs.check-event.outputs.commitHash }}
+          path: ${{ github.workspace }}/release/${{ steps.setup.outputs.pluginName }}-${{ steps.setup.outputs.pluginVersion }}-macos-${{ inputs.macOSArchitecture }}.*
 
       - name: Upload Debug Symbol Artifacts 🪲
         uses: actions/upload-artifact@v7
         if: ${{ needs.check-event.outputs.config == 'Release' }}
         with:
-          name: ${{ steps.setup.outputs.pluginName }}-${{ steps.setup.outputs.pluginVersion }}-macos-universal-${{ needs.check-event.outputs.commitHash }}-dSYMs
-          path: ${{ github.workspace }}/release/${{ steps.setup.outputs.pluginName }}-${{ steps.setup.outputs.pluginVersion }}-macos-universal-dSYMs.*
+          name: ${{ steps.setup.outputs.pluginName }}-${{ steps.setup.outputs.pluginVersion }}-macos-${{ inputs.macOSArchitecture }}-${{ needs.check-event.outputs.commitHash }}-dSYMs
+          path: ${{ github.workspace }}/release/${{ steps.setup.outputs.pluginName }}-${{ steps.setup.outputs.pluginVersion }}-macos-${{ inputs.macOSArchitecture }}-dSYMs.*
+
+      - uses: actions/cache/save@v4
+        if: github.event_name != 'pull_request' && steps.dependencies-cache.outputs.cache-hit != 'true'
+        with:
+          path: ${{ github.workspace }}/.deps
+          key: ${{ runner.os }}-deps-${{ inputs.macOSArchitecture }}-${{ hashFiles('buildspec.json') }}
 
       - uses: actions/cache/save@v4
         if: github.event_name != 'pull_request' && steps.ccache-cache.outputs.cache-hit != 'true'
         with:
           path: ${{ github.workspace }}/.ccache
-          key: ${{ runner.os }}-ccache-${{ needs.check-event.outputs.config }}
+          key: ${{ runner.os }}-ccache-${{ inputs.macOSArchitecture }}-${{ needs.check-event.outputs.config }}-${{ github.sha }}
 
   ubuntu-build:
     name: Build for Ubuntu 🐧
@@ -229,7 +253,7 @@ jobs:
         id: ccache-cache
         with:
           path: ${{ github.workspace }}/.ccache
-          key: ${{ runner.os }}-${{ matrix.os }}-ccache-x86_64-${{ needs.check-event.outputs.config }}
+          key: ${{ runner.os }}-${{ matrix.os }}-ccache-x86_64-${{ needs.check-event.outputs.config }}-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-${{ matrix.os }}-ccache-x86_64-
 
@@ -260,9 +284,10 @@ jobs:
         if: github.event_name != 'pull_request' && steps.ccache-cache.outputs.cache-hit != 'true'
         with:
           path: ${{ github.workspace }}/.ccache
-          key: ${{ runner.os }}-${{ matrix.os }}-ccache-x86_64-${{ needs.check-event.outputs.config }}
+          key: ${{ runner.os }}-${{ matrix.os }}-ccache-x86_64-${{ needs.check-event.outputs.config }}-${{ github.sha }}
 
   windows-build:
+    if: inputs.buildWindows
     name: Build for Windows 🪟
     runs-on: windows-2022
     needs: check-event
@@ -289,6 +314,12 @@ jobs:
 
           "pluginName=${ProductName}" >> $env:GITHUB_OUTPUT
           "pluginVersion=${ProductVersion}" >> $env:GITHUB_OUTPUT
+
+      - name: Cache Windows build dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/.deps
+          key: ${{ runner.os }}-deps-x64-${{ hashFiles('buildspec.json') }}
 
       - name: Build Plugin 🧱
         uses: ./.github/actions/build-plugin

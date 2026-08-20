@@ -1,0 +1,28 @@
+<!-- SPDX-FileCopyrightText: 2026 Funkrusha -->
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Audio Reactive Toolkit - Photo Mosaic</title>
+  <link rel="stylesheet" href="visualizer-showcase.css">
+  <style>
+    /* CSS 3D, not WebGL: a texture loaded from a file:// image always taints a
+       WebGL canvas in Chromium (including OBS's embedded browser), so this
+       visualizer builds its grid from plain background-image tiles instead. */
+    html, body { background: transparent; }
+    #stage { position: fixed; inset: 0; overflow: hidden; perspective: 900px; }
+    #grid { position: absolute; inset: 0; transform-style: preserve-3d; }
+    .tile { position: absolute; background-repeat: no-repeat; will-change: transform, opacity; backface-visibility: hidden; }
+  </style>
+</head>
+<body>
+  <div id="stage"><div id="grid"></div></div>
+  <div id="tempo" class="tempo"><span id="bpm-value">&mdash;</span><small>BPM</small></div>
+  <div id="status" class="status">Connecting...</div>
+  <script src="spectrum-scale.js"></script>
+  <script src="art-client.js"></script>
+  <script src="visualizer-mosaic.js"></script>
+</body>
+</html>

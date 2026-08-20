@@ -8,6 +8,17 @@
 
 #include "audio/audio-capture.hpp"
 #include "analysis/tempo-estimator.hpp"
+#include "filters/custom-shader-filter.hpp"
+#include "filters/glitch-filter.hpp"
+#include "filters/glow-filter.hpp"
+#include "filters/mosaic-filter.hpp"
+#include "filters/pixelate-filter.hpp"
+#include "filters/rgb-split-filter.hpp"
+#include "filters/shake-filter.hpp"
+#include "filters/tile-3d-filter.hpp"
+#include "filters/wave-filter.hpp"
+#include "filters/zoom-punch-filter.hpp"
+#include "modulation/modulation-state.hpp"
 #include "settings.hpp"
 #include "transport/art-protocol.hpp"
 #include "transport/browser-event-transport.hpp"
@@ -328,6 +339,9 @@ void plugin_tick(void *, float seconds)
 		pending_transient = true;
 		last_published_transient = snapshot.transient_counter;
 	}
+	// Published after add_beat() so this frame's tempo estimate (if a beat just landed) reaches
+	// filters immediately instead of one tick late.
+	ArtModulation::publish(snapshot, tempo_estimator.snapshot());
 	websocket_publish_timer += seconds;
 	const float websocket_publish_interval = 1.0F / static_cast<float>(websocket_messages_per_second);
 	if (websocket_publish_timer < websocket_publish_interval)
@@ -376,6 +390,16 @@ bool obs_module_load(void)
 	browser_event_transport.set_debug_logging(debug_logging);
 	audio_capture.configure_detection(beat_sensitivity, beat_cooldown_ms, transient_sensitivity,
 					  transient_cooldown_ms);
+	register_custom_shader_filter();
+	register_glitch_filter();
+	register_glow_filter();
+	register_mosaic_filter();
+	register_pixelate_filter();
+	register_rgb_split_filter();
+	register_shake_filter();
+	register_tile_3d_filter();
+	register_wave_filter();
+	register_zoom_punch_filter();
 	if (websocket_transport_enabled(transport_mode))
 		websocket_server.start(websocket_port);
 	obs_frontend_add_event_callback(frontend_event, nullptr);

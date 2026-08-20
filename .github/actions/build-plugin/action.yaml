@@ -8,6 +8,10 @@ inputs:
     description: Build configuration
     required: false
     default: RelWithDebInfo
+  macOSArchitecture:
+    description: macOS architecture to build (arm64 or universal)
+    required: false
+    default: universal
   buildSpecFile:
     description: Optional alternative build specification
     required: false
@@ -42,7 +46,7 @@ runs:
       run: |
         : Run macOS Build
 
-        local -a build_args=(--config ${{ inputs.config }})
+        local -a build_args=(--config ${{ inputs.config }} --architecture ${{ inputs.macOSArchitecture }})
         if (( ${+RUNNER_DEBUG} )) build_args+=(--debug)
 
         if [[ '${{ inputs.codesign }}' == 'true' ]] build_args+=(--codesign)

@@ -1,0 +1,110 @@
+// SPDX-FileCopyrightText: 2026 Funkrusha
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
+// Example "raw" effect for the ART Custom Shader filter's Advanced mode. Shows the full boilerplate
+// the wrapper mode normally hides (ViewProj/VSDefault/technique) plus the same uniform contract the
+// wrapper injects, so a file loaded here binds to the filter's modulation slots exactly like the
+// wrapper body does: source_size, elapsed_time, mod_1..mod_4.
+//
+// "Audio Kaleidoscope Pulse": mirrors the image into rotating segments around the center, then zooms,
+// splits color channels, and brightens on the beat - all driven by the modulation slots below.
+// Suggested bindings for this specific example (set them on the filter's four "Modulation slot"
+// groups after loading this file - Advanced mode does not apply any bindings on its own):
+//   mod_1 -> Bass       (0 .. 1)   zoom pulse
+//   mod_2 -> Highs      (0 .. 1)   chromatic aberration amount
+//   mod_3 -> Beat       (0 .. 1)   brightness pulse
+//   mod_4 -> unused in this example
+//
+// "Effect mix" (the filter's own "Effect mix (%)" group, not a mod slot) crossfades this shader's
+// output back against the untouched original - not scene/alpha transparency, a real blend against the
+// same source's own unprocessed pixel. Try binding it to Transient with Min 0 / Max 100: normally you
+// see the clean source, and the kaleidoscope punches in only on transients.
+//
+// If you write your own raw .effect for Advanced mode and want that same crossfade, sample `image` at
+// input.uv for the original and lerp() it with your result using `effect_mix` yourself - wrapper mode
+// does this for you automatically, raw mode does not, since it runs your technique untouched. Same
+// goes for premultiplying by alpha (color.rgb *= color.a) if you output partial alpha of your own.
+
+uniform float4x4 ViewProj;
+uniform texture2d image;
+uniform float2 source_size;
+uniform float elapsed_time;
+uniform float effect_mix;
+uniform float mod_1;
+uniform float mod_2;
+uniform float mod_3;
+uniform float mod_4;
+
+sampler_state textureSampler {
+	Filter = Linear;
+	AddressU = Clamp;
+	AddressV = Clamp;
+};
+
+struct VertData {
+	float4 pos : POSITION;
+	float2 uv : TEXCOORD0;
+};
+
+VertData VSDefault(VertData input)
+{
+	VertData output;
+	output.pos = mul(float4(input.pos.xyz, 1.0), ViewProj);
+	output.uv = input.uv;
+	return output;
+}
+
+#define PI 3.14159265
+
+float4 PSKaleidoscopePulse(VertData input) : TARGET
+{
+	// Aspect-correct, center-relative coordinates so segments stay square regardless of resolution.
+	float aspect = source_size.x / max(source_size.y, 1.0);
+	float2 centered = input.uv - 0.5;
+	centered.x *= aspect;
+
+	float radius = length(centered);
+	float angle = atan2(centered.y, centered.x);
+
+	// Mirror the angle into N repeating segments, slowly rotating over time.
+	const float segment_count = 6.0;
+	const float segment_size = (PI * 2.0) / segment_count;
+	angle += elapsed_time * 0.15;
+	angle = abs(fmod(angle, segment_size) - segment_size * 0.5);
+
+	// mod_1 pulls the radius in (zoom-in) as it rises - clamp so it can never divide by ~0.
+	float zoom = 1.0 + saturate(mod_1) * 0.6;
+	radius /= max(zoom, 0.1);
+
+	float2 folded = float2(cos(angle), sin(angle)) * radius;
+	folded.x /= max(aspect, 0.0001);
+	float2 sample_uv = folded + 0.5;
+
+	// mod_2 drives a small per-channel offset for a chromatic-aberration look.
+	float2 split = (sample_uv - 0.5) * (saturate(mod_2) * 0.015);
+	float r = image.Sample(textureSampler, sample_uv + split).r;
+	float g = image.Sample(textureSampler, sample_uv).g;
+	float b = image.Sample(textureSampler, sample_uv - split).b;
+	float a = image.Sample(textureSampler, sample_uv).a;
+
+	float4 color = float4(r, g, b, a);
+	// mod_3 briefly brightens the whole frame - meant for a Beat binding with fast decay.
+	color.rgb *= 1.0 + saturate(mod_3) * 0.5;
+
+	// Crossfade back against the untouched original using effect_mix, exactly like wrapper mode does
+	// automatically - this is what makes the source stay visible instead of just fading to nothing.
+	float4 original = image.Sample(textureSampler, input.uv);
+	float mix_amount = saturate(effect_mix);
+	original.rgb *= original.a;
+	color.rgb *= color.a;
+	return lerp(original, color, mix_amount);
+}
+
+technique Draw
+{
+	pass
+	{
+		vertex_shader = VSDefault(input);
+		pixel_shader = PSKaleidoscopePulse(input);
+	}
+}
