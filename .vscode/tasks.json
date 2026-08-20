@@ -71,6 +71,44 @@
     },
     {
       "type": "process",
+      "label": "ART: gersemi check (CI version)",
+      "command": "${env:windir}\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}\\.vscode\\gersemi-ci.ps1",
+        "-Mode",
+        "Check"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "detail": "Check CMake files with gersemi 0.21.0, the exact version the CI installs via obsproject/tools"
+    },
+    {
+      "type": "process",
+      "label": "ART: gersemi format (CI version)",
+      "command": "${env:windir}\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}\\.vscode\\gersemi-ci.ps1",
+        "-Mode",
+        "Format"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "detail": "Format CMake files in-place with gersemi 0.21.0, the exact version the CI installs via obsproject/tools"
+    },
+    {
+      "type": "process",
       "label": "ART: install x64 (win)",
       "command": "${env:windir}\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
       "args": [

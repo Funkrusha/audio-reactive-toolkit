@@ -31,24 +31,13 @@ function Get-TrackedFiles([string[]] $Patterns) {
 }
 
 $ClangFormat = Find-ClangFormat
-$Gersemi = Get-Command gersemi -ErrorAction SilentlyContinue
-$GersemiArguments = @()
-if ( $Gersemi ) {
-    $GersemiExecutable = $Gersemi.Source
-} else {
-    $Python = Get-Command python3, python, py -ErrorAction SilentlyContinue | Select-Object -First 1
-    if ( ! $Python ) {
-        throw 'gersemi was not found. Install Python and run: python3 -m pip install --user "gersemi>=0.12.0"'
-    }
 
-    & $Python.Source -m gersemi --version *> $null
-    if ( $LASTEXITCODE -ne 0 ) {
-        throw 'The gersemi Python module was not found. Run: python3 -m pip install --user "gersemi>=0.12.0"'
-    }
-
-    $GersemiExecutable = $Python.Source
-    $GersemiArguments = @('-m', 'gersemi')
-}
+# Pinned to the exact version CI installs, rather than whatever `gersemi` is
+# on PATH -- different versions disagree on formatting (see gersemi-pin.ps1).
+. "$PSScriptRoot\gersemi-pin.ps1"
+$Gersemi = Get-PinnedGersemi -ProjectRoot $ProjectRoot
+$GersemiExecutable = $Gersemi.Exe
+$GersemiArguments = $Gersemi.BaseArgs
 
 $SourceFiles = Get-TrackedFiles @('*.c', '*.h', '*.cpp', '*.hpp', '*.m', '*.mm')
 $CMakeFiles = Get-TrackedFiles @('CMakeLists.txt', '*.cmake')
