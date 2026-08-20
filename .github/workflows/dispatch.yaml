@@ -16,11 +16,16 @@ on:
         default: false
 permissions:
   contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   check-and-build:
     if: inputs.job == 'build'
     uses: ./.github/workflows/build-project.yaml
     with:
       buildMacOS: true
+      macOSArchitecture: universal
       buildUbuntu: true
+      buildWindows: true
       packageArtifacts: ${{ inputs.package }}

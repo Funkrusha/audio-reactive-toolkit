@@ -27,8 +27,10 @@ jobs:
     name: Build Project 🧱
     uses: ./.github/workflows/build-project.yaml
     with:
-      buildMacOS: true
-      buildUbuntu: true
+      buildMacOS: ${{ github.ref_name == 'main' || github.ref_type == 'tag' }}
+      macOSArchitecture: ${{ github.ref_type == 'tag' && 'universal' || 'arm64' }}
+      buildUbuntu: ${{ github.ref_name == 'develop' || startsWith(github.ref_name, 'release/') || github.ref_type == 'tag' }}
+      buildWindows: ${{ github.ref_name == 'main' || startsWith(github.ref_name, 'release/') || github.ref_type == 'tag' }}
     secrets: inherit
     permissions:
       contents: read
