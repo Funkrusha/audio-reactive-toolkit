@@ -1,0 +1,61 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "cmake",
+      "label": "CMake: configure x64 (Windows)",
+      "command": "configure",
+      "preset": "windows-x64",
+      "problemMatcher": [],
+      "detail": "Configure the Windows x64 build directory from CMakePresets.json"
+    },
+    {
+      "type": "cmake",
+      "label": "ART: build x64 (Windows)",
+      "command": "build",
+      "preset": "windows-x64",
+      "dependsOn": ["CMake: configure x64 (Windows)"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": ["$msCompile"],
+      "detail": "Configure and build Audio Reactive Toolkit with RelWithDebInfo"
+    },
+    {
+      "type": "process",
+      "label": "ART: check formatting (Windows)",
+      "command": "${env:windir}\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}\\.vscode\\check-formatting.ps1"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "detail": "Check C/C++ files with clang-format and CMake files with gersemi"
+    },
+    {
+      "type": "process",
+      "label": "ART: install x64 (Windows)",
+      "command": "${env:windir}\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}\\.vscode\\install-plugin.ps1"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "dependsOn": ["ART: build x64 (Windows)"],
+      "problemMatcher": [],
+      "detail": "Build and install ART to C:\\ProgramData\\obs-studio\\plugins"
+    }
+  ]
+}
