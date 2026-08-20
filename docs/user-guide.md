@@ -19,7 +19,7 @@ macOS packages build successfully but are not yet runtime-tested; please report 
 Download the latest package from the
 [GitHub Releases page](https://github.com/Funkrusha/audio-reactive-toolkit/releases).
 
-For `0.3.0`, choose the package for your system:
+For `0.4.0`, choose the package for your system:
 
 - Windows: `windows-x64-setup.exe`
 - macOS: `macos-universal.pkg`
@@ -48,7 +48,7 @@ Security** and review the displayed security message before trying again.
 Install the downloaded package from a terminal:
 
 ```bash
-sudo apt install ./audio-reactive-toolkit-0.3.0-x86_64-linux-gnu.deb
+sudo apt install ./audio-reactive-toolkit-0.4.0-x86_64-linux-gnu.deb
 ```
 
 Using `apt` instead of `dpkg` allows required dependencies to be resolved automatically.
@@ -92,6 +92,8 @@ Available pages:
 - `visualizer-city.html`: futuristic spectrum-driven skyline
 - `visualizer-constellation.html`: connected audio-reactive star field
 - `visualizer-vectorscope.html`: XY energy scope using bass and mid frequencies
+- `visualizer-mosaic.html`: photo mosaic that assembles from audio-reactive tiles
+- `visualizer-crystal.html`: growing crystal formation
 
 Use `1280 x 720` for the artistic visualizers. The diagnostic view works well at `1280 x 1280`.
 

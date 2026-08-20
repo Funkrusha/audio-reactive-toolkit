@@ -2,6 +2,36 @@
 
 All notable changes to Audio Reactive Toolkit are documented here.
 
+## 0.4.0 - 2026-08-20
+
+### Added
+
+- Nine native, audio-reactive OBS video filters: **ART Mosaic**, **ART RGB Split**, **ART Shake**, **ART Zoom/Punch**,
+  **ART Pixelate**, **ART Wave**, **ART Glow/Pulse**, **ART Glitch**, and **ART 3D Tile**.
+- **ART Custom Shader** filter for writing your own audio-reactive HLSL pixel shader, either as a short wrapper
+  function or a full raw `.effect` file, with a live-swappable four-slot generic modulation contract
+  (`mod_1`..`mod_4`) and an `effect_mix` crossfade against the untouched source. Ships with a bundled
+  "Audio Kaleidoscope Pulse" example effect.
+- Shared `ArtModulation` binding layer (source, `[min, max]` range, return-speed smoothing, and effect-strength
+  scaling) that every native filter's parameters are built on, so Source/Min/Max/Return-speed/Strength controls
+  behave identically across all ten filters.
+- Optional **Sync to BPM** phase-locked oscillator for the Wave, Shake, and Glitch filters, free-running at a rate
+  derived from the live tempo estimate and gently correcting phase drift on each detected beat.
+- **Photo Mosaic** and **Growing Crystal** bundled browser visualizers.
+- Dedicated [ART Custom Shader filter documentation](docs/custom-shader-filter.md).
+- Shared Windows VS Code development tasks and scripts (build, install-plugin, formatting checks).
+
+### Changed
+
+- Expanded the README's project description to reflect the toolkit's broader scope beyond visualizers: audio as a
+  general real-time control signal for reactive visuals, effects, and animations.
+- Optimized CI workflow usage and pinned local gersemi formatting checks to the CI version (0.21.0).
+
+### Notes
+
+- The nine built-in filters and ART Custom Shader are currently localized in English, German, and French only; the
+  remaining eight bundled languages still show English strings for these filters until translated.
+
 ## 0.3.0 - 2026-08-19
 
 ### Added
