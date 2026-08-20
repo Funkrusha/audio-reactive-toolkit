@@ -1,0 +1,44 @@
+// SPDX-FileCopyrightText: 2026 Funkrusha
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+uniform float4x4 ViewProj;
+uniform texture2d image;
+uniform float phase;
+uniform float frequency;
+uniform float amplitude_px;
+uniform float2 source_size;
+
+sampler_state textureSampler {
+	Filter = Linear;
+	AddressU = Clamp;
+	AddressV = Clamp;
+};
+
+struct VertData {
+	float4 pos : POSITION;
+	float2 uv : TEXCOORD0;
+};
+
+VertData VSDefault(VertData input)
+{
+	VertData output;
+	output.pos = mul(float4(input.pos.xyz, 1.0), ViewProj);
+	output.uv = input.uv;
+	return output;
+}
+
+float4 PSWave(VertData input) : TARGET
+{
+	float wave = sin(input.uv.y * frequency * 6.28318531 + phase);
+	float2 sample_uv = input.uv + float2(wave * amplitude_px / source_size.x, 0.0);
+	return image.Sample(textureSampler, sample_uv);
+}
+
+technique Draw
+{
+	pass
+	{
+		vertex_shader = VSDefault(input);
+		pixel_shader = PSWave(input);
+	}
+}

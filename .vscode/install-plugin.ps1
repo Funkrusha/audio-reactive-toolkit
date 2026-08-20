@@ -1,5 +1,7 @@
 [CmdletBinding()]
-param()
+param(
+    [string]$Configuration = 'RelWithDebInfo'
+)
 
 $ErrorActionPreference = 'Stop'
 $ProjectRoot = Resolve-Path "$PSScriptRoot/.."
@@ -25,9 +27,9 @@ if ( ! ( Test-Path ( Join-Path $BuildDirectory 'CMakeCache.txt' ) ) ) {
     throw 'build_x64 is not configured. Run the ART Windows build task first.'
 }
 
-& $CMakeExecutable --install $BuildDirectory --config RelWithDebInfo --prefix $InstallPrefix
+& $CMakeExecutable --install $BuildDirectory --config $Configuration --prefix $InstallPrefix
 if ( $LASTEXITCODE -ne 0 ) {
     throw 'ART installation failed. Close OBS and retry from an elevated VS Code window if access was denied.'
 }
 
-Write-Host "ART installed to $InstallPrefix/audio-reactive-toolkit" -ForegroundColor Green
+Write-Host "ART ($Configuration) installed to $InstallPrefix/audio-reactive-toolkit" -ForegroundColor Green

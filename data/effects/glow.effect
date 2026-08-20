@@ -1,0 +1,58 @@
+// SPDX-FileCopyrightText: 2026 Funkrusha
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+uniform float4x4 ViewProj;
+uniform texture2d image;
+uniform float radius_px;
+uniform float intensity;
+uniform float2 source_size;
+
+sampler_state textureSampler {
+	Filter = Linear;
+	AddressU = Clamp;
+	AddressV = Clamp;
+};
+
+struct VertData {
+	float4 pos : POSITION;
+	float2 uv : TEXCOORD0;
+};
+
+VertData VSDefault(VertData input)
+{
+	VertData output;
+	output.pos = mul(float4(input.pos.xyz, 1.0), ViewProj);
+	output.uv = input.uv;
+	return output;
+}
+
+// Cheap single-pass "glow": average a couple of rings of taps around each pixel instead of a
+// real multi-pass gaussian blur, then screen-blend the result back over the original image.
+float4 PSGlow(VertData input) : TARGET
+{
+	const int tap_count = 8;
+	float4 center = image.Sample(textureSampler, input.uv);
+	float3 blur = float3(0.0, 0.0, 0.0);
+	for (int ring = 0; ring < 2; ring++) {
+		float ring_radius = radius_px * (ring == 0 ? 0.5 : 1.0);
+		for (int i = 0; i < tap_count; i++) {
+			float angle = (float(i) / float(tap_count)) * 6.28318531;
+			float2 offset_uv = float2(cos(angle), sin(angle)) * ring_radius / source_size;
+			blur += image.Sample(textureSampler, input.uv + offset_uv).rgb;
+		}
+	}
+	blur /= float(tap_count * 2);
+
+	float3 glow = saturate(blur * intensity);
+	float3 result = 1.0 - (1.0 - center.rgb) * (1.0 - glow);
+	return float4(result, center.a);
+}
+
+technique Draw
+{
+	pass
+	{
+		vertex_shader = VSDefault(input);
+		pixel_shader = PSGlow(input);
+	}
+}

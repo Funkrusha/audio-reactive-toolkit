@@ -1,0 +1,62 @@
+// SPDX-FileCopyrightText: 2026 Funkrusha
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+uniform float4x4 ViewProj;
+uniform texture2d image;
+uniform float block_count;
+uniform float seed;
+uniform float amount_px;
+uniform float2 source_size;
+
+sampler_state textureSampler {
+	Filter = Linear;
+	AddressU = Clamp;
+	AddressV = Clamp;
+};
+
+struct VertData {
+	float4 pos : POSITION;
+	float2 uv : TEXCOORD0;
+};
+
+VertData VSDefault(VertData input)
+{
+	VertData output;
+	output.pos = mul(float4(input.pos.xyz, 1.0), ViewProj);
+	output.uv = input.uv;
+	return output;
+}
+
+float hash(float2 p)
+{
+	return frac(sin(dot(p, float2(12.9898, 78.233))) * 43758.5453);
+}
+
+// Per-band horizontal shift plus a small chromatic split, both keyed off the same random band
+// state so amount_px==0 is a clean no-op.
+float4 PSGlitch(VertData input) : TARGET
+{
+	float block_index = floor(input.uv.y * block_count);
+	float2 hash_input = float2(block_index, seed);
+	float shift = hash(hash_input) * 2.0 - 1.0;
+	float active = hash(hash_input + float2(0.37, 0.91)) > 0.65 ? 1.0 : 0.0;
+
+	float offset_px = shift * amount_px * active;
+	float2 offset_uv = float2(offset_px / source_size.x, 0.0);
+	float2 split_uv = offset_uv * 0.3;
+
+	float2 base_uv = input.uv + offset_uv;
+	float red = image.Sample(textureSampler, base_uv + split_uv).r;
+	float4 center = image.Sample(textureSampler, base_uv);
+	float blue = image.Sample(textureSampler, base_uv - split_uv).b;
+	return float4(red, center.g, blue, center.a);
+}
+
+technique Draw
+{
+	pass
+	{
+		vertex_shader = VSDefault(input);
+		pixel_shader = PSGlitch(input);
+	}
+}

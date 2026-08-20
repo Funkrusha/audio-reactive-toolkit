@@ -47,6 +47,32 @@ target_sources(
     src/audio/audio-capture.hpp
     src/analysis/tempo-estimator.cpp
     src/analysis/tempo-estimator.hpp
+    src/modulation/modulation-state.cpp
+    src/modulation/modulation-state.hpp
+    src/modulation/modulation-binding.cpp
+    src/modulation/modulation-binding.hpp
+    src/modulation/tempo-sync.cpp
+    src/modulation/tempo-sync.hpp
+    src/filters/custom-shader-filter.cpp
+    src/filters/custom-shader-filter.hpp
+    src/filters/glitch-filter.cpp
+    src/filters/glitch-filter.hpp
+    src/filters/glow-filter.cpp
+    src/filters/glow-filter.hpp
+    src/filters/mosaic-filter.cpp
+    src/filters/mosaic-filter.hpp
+    src/filters/pixelate-filter.cpp
+    src/filters/pixelate-filter.hpp
+    src/filters/rgb-split-filter.cpp
+    src/filters/rgb-split-filter.hpp
+    src/filters/shake-filter.cpp
+    src/filters/shake-filter.hpp
+    src/filters/tile-3d-filter.cpp
+    src/filters/tile-3d-filter.hpp
+    src/filters/wave-filter.cpp
+    src/filters/wave-filter.hpp
+    src/filters/zoom-punch-filter.cpp
+    src/filters/zoom-punch-filter.hpp
     src/transport/art-protocol.cpp
     src/transport/art-protocol.hpp
     src/transport/browser-event-transport.cpp

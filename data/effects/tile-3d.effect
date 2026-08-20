@@ -1,0 +1,112 @@
+// SPDX-FileCopyrightText: 2026 Funkrusha
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+uniform float4x4 ViewProj;
+uniform texture2d image;
+uniform float rows;
+uniform float columns;
+uniform float gap_px;
+uniform float depth;
+uniform float tilt_degrees;
+uniform float2 source_size;
+
+sampler_state textureSampler {
+	Filter = Linear;
+	AddressU = Clamp;
+	AddressV = Clamp;
+};
+
+struct VertData {
+	float4 pos : POSITION;
+	float2 uv : TEXCOORD0;
+};
+
+VertData VSDefault(VertData input)
+{
+	VertData output;
+	output.pos = mul(float4(input.pos.xyz, 1.0), ViewProj);
+	output.uv = input.uv;
+	return output;
+}
+
+float hash(float2 p)
+{
+	return frac(sin(dot(p, float2(12.9898, 78.233))) * 43758.5453);
+}
+
+// Inverse-maps a point on a flat tile rotated by `theta` around one axis and viewed with a
+// pinhole camera at distance `depth`, back onto the tile's un-rotated (-0.5..0.5) local space.
+// Closed-form solution of screen = object*cos(theta)*depth / (depth - object*sin(theta)).
+float2 tilt_inverse(float2 centered, float theta, float depth_units, bool around_y)
+{
+	float c = cos(theta);
+	float s = sin(theta);
+	if (around_y) {
+		float denom = max(c * depth_units - centered.x * s, 0.05);
+		float x = centered.x * depth_units / denom;
+		float y = centered.y * (1.0 + x * s / depth_units);
+		return float2(x, y);
+	}
+	float denom = max(c * depth_units - centered.y * s, 0.05);
+	float y = centered.y * depth_units / denom;
+	float x = centered.x * (1.0 + y * s / depth_units);
+	return float2(x, y);
+}
+
+// A tilted tile can visually bulge past its own grid rectangle into a neighbor's screen space
+// (foreshortening on one edge, magnification on the other). So instead of only inverse-mapping
+// the pixel's own cell, we test the 3x3 neighborhood of tiles around it and let whichever one's
+// tilted silhouette actually covers this pixel claim it - nearer-to-camera tile wins on overlap.
+float4 PSTile3D(VertData input) : TARGET
+{
+	float2 grid = float2(columns, rows);
+	float2 continuous_cell = input.uv * grid;
+	float2 home_cell = floor(continuous_cell);
+
+	float2 gap_uv = gap_px / (source_size / grid);
+	float2 half_gap = gap_uv * 0.5;
+	float2 inner_half = max(float2(0.5, 0.5) - half_gap, float2(0.01, 0.01));
+
+	bool found = false;
+	float best_z = 0.0;
+	float2 best_sample_uv = float2(0.0, 0.0);
+
+	for (int dy = -1; dy <= 1; dy++) {
+		for (int dx = -1; dx <= 1; dx++) {
+			float2 candidate_cell = home_cell + float2(float(dx), float(dy));
+			float2 centered = (continuous_cell - candidate_cell) - 0.5;
+
+			// Each tile picks its own tilt axis and sign so the grid doesn't move as one flat sheet.
+			float axis_pick = hash(candidate_cell);
+			float sign = hash(candidate_cell + float2(5.2, 1.7)) >= 0.5 ? 1.0 : -1.0;
+			bool around_y = axis_pick < 0.5;
+			float theta = radians(tilt_degrees) * sign;
+
+			float2 object_local = tilt_inverse(centered, theta, depth, around_y);
+			bool inside = abs(object_local.x) <= inner_half.x && abs(object_local.y) <= inner_half.y;
+			if (inside) {
+				float z = around_y ? (-object_local.x * sin(theta)) : (-object_local.y * sin(theta));
+				if (!found || z > best_z) {
+					found = true;
+					best_z = z;
+					float2 sample_local = (object_local + inner_half) / (2.0 * inner_half);
+					best_sample_uv = (candidate_cell + sample_local) / grid;
+				}
+			}
+		}
+	}
+
+	if (!found) {
+		discard;
+	}
+	return image.Sample(textureSampler, best_sample_uv);
+}
+
+technique Draw
+{
+	pass
+	{
+		vertex_shader = VSDefault(input);
+		pixel_shader = PSTile3D(input);
+	}
+}

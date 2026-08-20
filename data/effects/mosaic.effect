@@ -1,0 +1,91 @@
+// SPDX-FileCopyrightText: 2026 Funkrusha
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+uniform float4x4 ViewProj;
+uniform texture2d image;
+uniform float rows;
+uniform float columns;
+uniform float gap_pixels;
+uniform float tile_scale;
+uniform float scatter_pixels;
+uniform float rotation_degrees;
+uniform float z_push_pixels;
+uniform float2 source_size;
+
+sampler_state textureSampler {
+	Filter = Linear;
+	AddressU = Clamp;
+	AddressV = Clamp;
+};
+
+struct VertData {
+	float4 pos : POSITION;
+	float2 uv : TEXCOORD0;
+};
+
+VertData VSDefault(VertData input)
+{
+	VertData output;
+	output.pos = mul(float4(input.pos.xyz, 1.0), ViewProj);
+	output.uv = input.uv;
+	return output;
+}
+
+float2 tile_direction(float2 cell)
+{
+	float x = frac(sin(dot(cell, float2(12.9898, 78.233))) * 43758.5453) * 2.0 - 1.0;
+	float y = frac(sin(dot(cell, float2(39.3468, 11.135))) * 24634.6345) * 2.0 - 1.0;
+	return float2(x, y);
+}
+
+float4 PSMosaic(VertData input) : TARGET
+{
+	float2 grid = float2(columns, rows);
+	float2 tiled = input.uv * grid;
+	float2 cell = floor(tiled);
+	float2 local = frac(tiled);
+	float2 tile_pixels = source_size / grid;
+
+	float2 gap = min(float2(0.49, 0.49), gap_pixels / tile_pixels * 0.5);
+	if (local.x < gap.x || local.x > 1.0 - gap.x || local.y < gap.y || local.y > 1.0 - gap.y)
+		return float4(0.0, 0.0, 0.0, 0.0);
+
+	// Rotation: per-tile angle around the tile's own center. Alternate spin direction per tile
+	// (via the same hash used for scatter) so neighbouring tiles don't turn in lockstep.
+	float2 centered = local - 0.5;
+	float spin = tile_direction(cell).x >= 0.0 ? 1.0 : -1.0;
+	float angle = radians(rotation_degrees * spin);
+	float s = sin(angle);
+	float c = cos(angle);
+	centered = float2(centered.x * c - centered.y * s, centered.x * s + centered.y * c);
+
+	float reactive_scale = max(0.05, tile_scale);
+	centered /= reactive_scale;
+
+	float2 sample_local = centered + 0.5;
+	if (sample_local.x < 0.0 || sample_local.x > 1.0 || sample_local.y < 0.0 || sample_local.y > 1.0)
+		return float4(0.0, 0.0, 0.0, 0.0);
+
+	// Scatter moves each tile in its own pseudo-random direction; Z Push moves tiles radially
+	// away from the grid's center, faking an explosion along a depth axis without real 3D.
+	float2 center_cell = (grid - 1.0) * 0.5;
+	float2 outward = cell - center_cell;
+	float outward_length = length(outward);
+	float2 outward_dir = outward_length > 0.0001 ? outward / outward_length : tile_direction(cell);
+	float2 displacement_px = tile_direction(cell) * scatter_pixels + outward_dir * z_push_pixels;
+
+	float2 sample_uv = (cell + sample_local) / grid - displacement_px / source_size;
+	if (sample_uv.x < 0.0 || sample_uv.x > 1.0 || sample_uv.y < 0.0 || sample_uv.y > 1.0)
+		return float4(0.0, 0.0, 0.0, 0.0);
+
+	return image.Sample(textureSampler, sample_uv);
+}
+
+technique Draw
+{
+	pass
+	{
+		vertex_shader = VSDefault(input);
+		pixel_shader = PSMosaic(input);
+	}
+}

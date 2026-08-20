@@ -1,0 +1,44 @@
+// SPDX-FileCopyrightText: 2026 Funkrusha
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+uniform float4x4 ViewProj;
+uniform texture2d image;
+uniform float2 offset_px;
+uniform float2 source_size;
+
+sampler_state textureSampler {
+	Filter = Linear;
+	AddressU = Clamp;
+	AddressV = Clamp;
+};
+
+struct VertData {
+	float4 pos : POSITION;
+	float2 uv : TEXCOORD0;
+};
+
+VertData VSDefault(VertData input)
+{
+	VertData output;
+	output.pos = mul(float4(input.pos.xyz, 1.0), ViewProj);
+	output.uv = input.uv;
+	return output;
+}
+
+float4 PSRgbSplit(VertData input) : TARGET
+{
+	float2 offset_uv = offset_px / source_size;
+	float red = image.Sample(textureSampler, input.uv + offset_uv).r;
+	float4 center = image.Sample(textureSampler, input.uv);
+	float blue = image.Sample(textureSampler, input.uv - offset_uv).b;
+	return float4(red, center.g, blue, center.a);
+}
+
+technique Draw
+{
+	pass
+	{
+		vertex_shader = VSDefault(input);
+		pixel_shader = PSRgbSplit(input);
+	}
+}

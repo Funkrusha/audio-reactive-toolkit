@@ -3,7 +3,7 @@
   "tasks": [
     {
       "type": "cmake",
-      "label": "CMake: configure x64 (Windows)",
+      "label": "CMake: configure x64 (win)",
       "command": "configure",
       "preset": "windows-x64",
       "problemMatcher": [],
@@ -11,10 +11,10 @@
     },
     {
       "type": "cmake",
-      "label": "ART: build x64 (Windows)",
+      "label": "ART: build x64 (win)",
       "command": "build",
       "preset": "windows-x64",
-      "dependsOn": ["CMake: configure x64 (Windows)"],
+      "dependsOn": ["CMake: configure x64 (win)"],
       "group": {
         "kind": "build",
         "isDefault": true
@@ -23,8 +23,38 @@
       "detail": "Configure and build Audio Reactive Toolkit with RelWithDebInfo"
     },
     {
+      "type": "cmake",
+      "label": "ART: build x64 Release (win)",
+      "command": "build",
+      "preset": "windows-x64-release",
+      "dependsOn": ["CMake: configure x64 (win)"],
+      "group": "build",
+      "problemMatcher": ["$msCompile"],
+      "detail": "Configure and build Audio Reactive Toolkit with Release (no debug info)"
+    },
+    {
       "type": "process",
-      "label": "ART: check formatting (Windows)",
+      "label": "ART: install x64 Release (win)",
+      "command": "${env:windir}\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}\\.vscode\\install-plugin.ps1",
+        "-Configuration",
+        "Release"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "dependsOn": ["ART: build x64 Release (win)"],
+      "problemMatcher": [],
+      "detail": "Build (Release) and install ART to C:\\ProgramData\\obs-studio\\plugins"
+    },
+    {
+      "type": "process",
+      "label": "ART: check formatting (win)",
       "command": "${env:windir}\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
       "args": [
         "-NoProfile",
@@ -41,7 +71,7 @@
     },
     {
       "type": "process",
-      "label": "ART: install x64 (Windows)",
+      "label": "ART: install x64 (win)",
       "command": "${env:windir}\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
       "args": [
         "-NoProfile",
@@ -53,7 +83,7 @@
       "options": {
         "cwd": "${workspaceFolder}"
       },
-      "dependsOn": ["ART: build x64 (Windows)"],
+      "dependsOn": ["ART: build x64 (win)"],
       "problemMatcher": [],
       "detail": "Build and install ART to C:\\ProgramData\\obs-studio\\plugins"
     }
